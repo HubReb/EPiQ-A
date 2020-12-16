@@ -3,8 +3,6 @@
 
 """ Define model to rank documents relative to a query with cosine similarity of TFIDF vectors"""
 
-import pickle
-
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity

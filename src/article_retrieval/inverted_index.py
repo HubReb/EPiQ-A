@@ -4,10 +4,7 @@
 
 from collections import defaultdict
 
-import spacy
-import pandas as pd
-
-from data_utils import save_index, get_article_content
+from data_utils import get_article_content
 
 
 def create_inverted_index(dataframe, model):
