@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Train document ranking model with Opaki BM 25 weights."""
+"""Train document ranking model with Okapi BM 25 weights."""
 
 
 import pickle
@@ -10,8 +10,8 @@ from gensim.summarization.bm25 import BM25
 from data_utils import load_corpus
 
 
-class Opaki25:
-    """A document ranker that utilizes the Opaki BM 25 weighting scheme.
+class Okapi25:
+    """A document ranker that utilizes the Okapi BM 25 weighting scheme.
 
     The class uses gensim.summarization.bm25 module to build the weights.
     Forther information on the BM 25 weighting process can be found in
@@ -75,7 +75,7 @@ class Opaki25:
             epsilon: float
                 The value to set self.epsilon to.
             filename: string
-                The name of the file the trained Opaki25 model is stored in.
+                The name of the file the trained Okapi25 model is stored in.
                 The model is loaded if the file exists.
         """
 
