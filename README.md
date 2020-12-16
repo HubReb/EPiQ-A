@@ -13,3 +13,19 @@ Each pipeline step has its own README that states what pre-existing code/data wa
 
 All requrements are given in requirements.txt
 
+
+
+# Project State
+• Planning State: 
+• Future Planning: 
+• High-level Architecture Description: 
+• Experiments: 
+
+
+# Data Analysis
+• Data Sources: 
+• Preprocessing: 
+• BasicStatistics:
+• Examples:
+
+# Current Code State
