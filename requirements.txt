@@ -1,0 +1,8 @@
+lxml
+tqdm
+spacy
+pandas
+urllib3
+html2text
+beautifulsoup4
+sparqlwrapper
