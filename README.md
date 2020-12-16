@@ -6,10 +6,10 @@
 * Leander Girrbach (girrbach@cl.uni-heidelberg.de)
 * Rebekka Hubert (hubert@cl.uni-heidelberg,de)
 
-## existing code
+## Existing code
 Each pipeline step has its own README that states what pre-existing code/data was used.
 
-## requirements
+## Requirements
 
 All requrements are given in requirements.txt
 
