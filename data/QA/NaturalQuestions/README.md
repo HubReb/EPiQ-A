@@ -7,7 +7,7 @@ Data is taken from [https://ai.google.com/research/NaturalQuestions/download](ht
 
 ## Download
 
-Please download manually (google account needed) and put the data in this folder.
+Please download manually (google account needed) and put the data in this folder.  
 Note: The test-data is not publicly available.
 
 ## References

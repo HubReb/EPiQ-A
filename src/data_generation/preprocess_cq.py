@@ -2,6 +2,7 @@
 import re
 import sys
 import time
+from os.path import join
 
 import json
 import spacy
@@ -103,8 +104,9 @@ def main():
     nlp = spacy.load('en_core_web_sm', disable=['tagger', 'parser', 'ner', 'textcat'])
     subsets = ['train', 'dev', 'test']
     for subset in subsets:
+        path = f"../../data/QA/ConvQuestions/{subset}_set/"
         print('subset:', subset)
-        filename = f'../../data/QA/ConvQuestions/{subset}_set/{subset}_set_ALL.json'
+        filename = join(path, f"{subset}_set_ALL.json")
         with open(filename) as f:
             file_content = f.read()
         conversations = json.loads(file_content)
@@ -148,10 +150,10 @@ def main():
                 url_to_text = url_to_text.append([url2text_entry])
         conv_data = conv_data.reset_index(drop=True)
         conv_data = conv_data.drop_duplicates()
-        conv_data.to_csv(f'cq_new_{subset}_all.csv', index=False)
+        conv_data.to_csv(join(path, f'cq_{subset}_all.csv'), index=False)
         url_to_text = url_to_text.reset_index(drop=True)
         url_to_text = url_to_text.drop_duplicates()
-        url_to_text.to_csv(f'cq_new_{subset}_wiki_text.csv', index=False)
+        url_to_text.to_csv(join(path, f'cq_{subset}_wiki_text.csv'), index=False)
 
 
 if __name__ == "__main__":
