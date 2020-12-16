@@ -6,3 +6,5 @@ urllib3
 html2text
 beautifulsoup4
 sparqlwrapper
+numpy
+gensim
