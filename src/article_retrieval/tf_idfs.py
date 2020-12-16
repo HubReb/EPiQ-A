@@ -17,7 +17,7 @@ class TFIDFmodel:
     """
     A document ranker that utilizes cosine similarity between TF-IDF vectors.
 
-    The class uses sklearn.feature_extraction.text TfidfVectorizer to create
+    The class uses sklearn.feature_extraction.text.TfidfVectorizer to create
     TF-IDF vectors for each document in the dataset. The model can then be
     used to rank either selected or all documents in the dataset against
     a query via cosine similarity between document TFIDF vector and the
