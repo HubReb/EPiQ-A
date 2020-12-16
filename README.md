@@ -15,17 +15,17 @@ All requrements are given in requirements.txt
 
 
 
-# Project State
+## Project State
 • Planning State: 
 • Future Planning: 
 • High-level Architecture Description: 
 • Experiments: 
 
 
-# Data Analysis
+## Data Analysis
 • Data Sources: 
 • Preprocessing: 
 • BasicStatistics:
 • Examples:
 
-# Current Code State
+## Current Code State
