@@ -16,14 +16,18 @@ from nltk.corpus import stopwords
 ##############################################################################
 
 QuestionFields = [
-    'terms',
-    'synonyms',
-    'named_entities',
-    'question_type',
-    'focus',
-    'focus_modifiers'
+    'terms',           # Relevant tokens of the question
+    'synonyms',        # Synonyms to relevant tokens (for term augmentation)
+                       #                              -> combat sparsity!
+    'pos_tags',        # POS tags of relevant tokens
+    'named_entities',  # Named Entities in question
+    'question_type',   # Question type according to fine-grained taxonomy
+                       # from Li and Rother (2002)
+    'focus'            # Main keyword in question, has large influence on
+                       # the expected answer
     ]
-Question = namedtuple('Question', QuestionFields)
+Question = namedtuple('Question', QuestionFields)  # Datastructure to store
+                                                   # questions
 SpacyQuestion = spacy.tokens.doc.Doc
 Token = spacy.tokens.token.Token
 Tokens = List[Union[Token, str]]
@@ -33,6 +37,14 @@ EmbeddingModel = gensim.load("glove-twitter-25")  #TODO: Change to larger
 Stemmer = nltk.stem.snowball.EnglishStemmer()
 WordNetLemmatiser = nltk.stem.WordNetLemmatizer()
 Stopwords = set(stopwords.words('english'))
+# Set of question words found by a manual inspection of the NaturalQuestions
+# Dataset and by consulting
+# https://dictionary.cambridge.org/grammar/british-grammar/question-words
+QuestionWords = {
+    'what', "what's", 'whats', 'what’s', 'when', "when's", 'whens', 'when’s',
+    'where', "where's", 'whereabouts', 'whether', 'whi', 'which', 'while',
+    'who', "who's", 'whom', 'whos', 'whose', 'who’s', 'why', 'how'
+    }
 
 
 ##############################################################################
@@ -60,8 +72,9 @@ def convert_spacy_pos_to_nltk(pos: str) -> str:
     
 
 def postprocess_string(
-        term: str, lemmatise=False, stem=False, tolower=False,
-        filter_stopwords=False) -> str:
+        term: str, lemmatise: bool = False, stem: bool = False,
+        tolower: bool = False,
+        filter_stopwords: bool = False) -> str:
     """
     Docstring
     """
@@ -73,11 +86,14 @@ def postprocess_string(
         return None
     
     if stem:
-        return Stemmer.stem(term)
+        return Stemmer.stem(term)  # Stemmer is a global variable
     
     elif lemmatise:
+        # Find possible lemma (we don't know the pos tag, so we try all)
         for pos in [wordnet.NOUN, wordnet.VERB, wordnet.ADJ, wordnet.ADV]:
             lemma = WordNetLemmatiser.lemmatize(term, pos)
+            # If we have found a POS-Tag that allows truncation, we assume
+            # that it's the correct one
             if lemma != term:
                 return lemma
         else:
@@ -87,8 +103,9 @@ def postprocess_string(
 
 
 def postprocess_spacy_token(
-        term, lemmatise=False, stem=False, tolower=False,
-        filter_stopwords=False) -> str:
+        term: Token, lemmatise: bool = False, stem: bool = False,
+        tolower: bool = False,
+        filter_stopwords: bool = False) -> str:
     """
     Docstring
     """
@@ -118,10 +135,49 @@ def postprocess(terms: Tokens, **kwargs) -> List[str]:
         elif isinstance(term, Token):
             postprocessed_term = postprocess_spacy_token(term, **kwargs)
         
+        else:
+            raise TypeError("Unknown token datatype {}".format(type(term)))
+        
         if postprocessed_term is not None:
             processed_terms.append(postprocessed_term)
     
     return processed_terms
+
+
+def get_lemmas_from_wordnet_synset(synset):
+    """
+    Extracts all lemmata from the given wordnet synset.
+    """
+    all_lemmata = []
+    for lemma in synset.lemma_names():
+        if not lemma.isalnum():  # Filter compounds / genre names / ...
+            continue
+        
+        if lemma in Stopwords:  # Filter stopwords
+            continue
+        
+        all_lemmata.append(lemma)
+    return all_lemmata
+
+
+def find_root(question: SpacyQuestion) -> Token:
+    """
+    Finds the root element of the question's dependency parse.
+    """
+    for token in question:
+        if token.dep_ == "ROOT":
+            return token
+
+
+def get_noun_chunk(token: Token, question: SpacyQuestion) -> List[str]:
+    accepted_pos = ["NUM", "NOUN", "PROPN", "ADJ"]
+    for noun_chunk in question.noun_chunks:
+        if token in noun_chunk:
+            return [
+                str(tken) for tken in noun_chunk if tken.pos_ in accepted_pos
+                ]
+    
+    return [str(token)]
 
 
 ##############################################################################
@@ -129,25 +185,42 @@ def postprocess(terms: Tokens, **kwargs) -> List[str]:
 ##############################################################################
 
 def get_wordnet_synonyms(term: str, pos: str, max_synonyms: int) -> List[str]:
+    """
+    Returns all Lemmas from all WordNet synsets of `term`.
+    """
     all_synsets = wordnet.synsets(term, pos=pos)
     all_synonyms = []
     # TODO: Hyponyms/Hypernyms?
     for synset in all_synsets:
-        for lemma in synset.lemma_names():
-            if lemma.isalnum() and lemma not in Stopwords:
-                all_synonyms.append(lemma)
+        all_synonyms.extend(get_lemmas_from_wordnet_synset(synset))
     
     # TODO: Smarter selection
     random.shuffle(all_synonyms)
     return all_synonyms[:min(max_synonyms, len(all_synonyms))]
 
 
-def get_word2vec_synonyms(term: str, pos: str, max_synonyms: int) -> List[str]:
-    synonyms = EmbeddingModel.most_similar(term.lower(), topn=max_synonyms)
-    return [synonym for synonym, _ in synonyms if synonym not in Stopwords]
+def get_word2vec_synonyms(term: str, pos: str,
+                          max_synonyms: int) -> List[str]:
+    """
+    Retrieves the `max_synonyms` tokens most similar to `terms` from the
+    global Embedding model.
+    """
+    try:
+        synonyms = \
+            EmbeddingModel.most_similar(term.lower(), topn=max_synonyms)
+        return [
+            synonym for synonym, _ in synonyms if synonym not in Stopwords
+            ]
+    except KeyError:
+        return []
 
 
-def get_synonyms(question: SpacyQuestion, method: str = None, max_synonyms: int = 10) -> List[str]:
+def get_synonyms(question: SpacyQuestion, method: str = None,
+                 max_synonyms: int = 10) -> List[str]:
+    """
+    Depending on `method`, invokes the correct synonym retrieval
+    function for all tokens in `question`.
+    """
     if method == "word2vec":
         synonym_getter = get_word2vec_synonyms
     else:
@@ -156,8 +229,9 @@ def get_synonyms(question: SpacyQuestion, method: str = None, max_synonyms: int 
     all_synonyms = []
     for token in question:
         pos = convert_spacy_pos_to_nltk(token.pos_)
-        synonyms = synonym_getter(str(token), pos, max_synonyms)
-        all_synonyms.extend(synonyms)
+        if str(token) not in Stopwords:  # Ignore stopwords
+            synonyms = synonym_getter(str(token), pos, max_synonyms)
+            all_synonyms.extend(synonyms)
     
     return list(set(all_synonyms))
 
@@ -167,11 +241,47 @@ def get_named_entities(question: SpacyQuestion) -> List[str]:
 
 
 def get_question_type() -> str:
+    # TODO
     return None
 
 
-def get_focus() -> str:
-    return None
+def get_focus(question: SpacyQuestion) -> str:
+    root = find_root(question)
+    noun_chunk = partial(get_noun_chunk, question=question)
+    
+    nsubjs = []
+    dobjs = []
+    
+    # 1st rule: Try to find nsubj or dobj
+    for token in root.children:
+        # Exclude question words:
+        if str(token) in QuestionWords:
+            continue
+        
+        elif token.pos_ == "PRON":
+            continue
+        
+        if token.dep_ == 'nsubj':
+            nsubjs.append(token)
+        
+        elif token.dep_ == 'dobj':
+            dobjs.append(token)
+    
+    if nsubjs:
+        return noun_chunk(nsubjs[0])  # First subject
+    
+    elif dobjs:
+        return noun_chunk(dobjs[0])  # First dobj
+        
+    # Fallback: Choose first noun that is not a question word
+    for token in root.children:
+        for token in root.subtree:
+            if token.pos_ == 'NOUN' and str(token) not in QuestionWords:
+                return noun_chunk(token)
+    
+    # Fallback 2: Return root (although in this case we should really
+    #             question the question's sanity
+    return noun_chunk(root)
 
 
 ##############################################################################
@@ -184,7 +294,7 @@ def parse_question(
         lemmatise=False, stem=False, tolower=False,
         filter_stopwords=False) -> Question:
     """
-    Docstring
+    Main method for parsing a question.
     """
     spacy_question = make_spacy_representation(question)
     postprocessor = partial(
@@ -196,18 +306,22 @@ def parse_question(
     
     return Question(
         terms = postprocessor(spacy_question),
+        pos_tags = None,
         synonyms = postprocessor(
             get_synonyms(spacy_question, synonym_method, max_synonyms)
             ),
         named_entities = postprocessor(get_named_entities(spacy_question)),
         question_type = get_question_type(),
-        focus = get_focus(),
-        focus_modifiers = None
+        focus = get_focus(spacy_question)
         )
 
 
 if __name__ == '__main__':
-    qtext = "Who was America's most successful president?"
-    parse = parse_question(qtext, stem=True)
-    
-    print(parse)
+    with open("test_questions.txt") as tf:
+        for line in tf:
+            question = line.strip()
+            parse = parse_question(question)
+            
+            print(question)
+            print(parse.focus)
+            print()

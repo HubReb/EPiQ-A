@@ -11,3 +11,5 @@ gensim
 torch==1.7.1
 transformers==4.0.1
 numpy==1.19.4
+nltk
+scikit-learn
