@@ -54,8 +54,9 @@ def process_corpus(dataframe_filename, model):
         counter += 1
         document = " ".join(get_article_content(document, model, stop_words))
         processed_corpus.append(document)
-        if counter % 10000 == 0:
+        if counter % 10 == 0:
             print(counter/corpus_length)
+            break
     # adapted from https://stackoverflow.com/questions/30711899/python-how-to-write-list-of-lists-to-file
     with open(f"{dataframe_filename.split('.csv')[0]}_lemmatized_stop_words_removed.csv", "w") as f:
         wr = csv.writer(f)
@@ -84,8 +85,13 @@ def get_article_content(article, model, stop_words):
 def load_corpus(filename):
     """Load preprocessed corpus from file if it exists, else create it."""
     split_filename = filename.split('.csv')[0]
-    if isfile(f"{split_filename}_lemmatized_stop_words_removed.npy"):
-        documents = pd.read_csv(f"{split_filename}_lemmatized_stop_words_removed.csv")
+    if isfile(f"{split_filename}_lemmatized_stop_words_removed.csv"):
+        documents = []
+        # adapted from https://docs.python.org/3.8/library/csv.html
+        with open(f"{split_filename}_lemmatized_stop_words_removed.csv") as csvfile:
+            docreader = csv.reader(csvfile)
+            for row in docreader:
+                documents.append("".join(row))
         index2key = read_index(f"{split_filename}_index2key.json")
     else:
         model = spacy.load('en_core_web_sm')

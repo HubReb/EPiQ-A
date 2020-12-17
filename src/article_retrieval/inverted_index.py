@@ -3,8 +3,13 @@
 """ Create an inverted index from a document collection."""
 
 from collections import defaultdict
+from os.path import join
 
-from data_utils import get_article_content
+import pandas as pd
+import spacy
+
+from data_utils import get_article_content, save_index
+from config import DATAPATH_PROCESSED
 
 
 def create_inverted_index(dataframe, model):
@@ -26,3 +31,11 @@ def create_inverted_index(dataframe, model):
     for index, doc_ids in inverted_index.items():
         final_index[index] = list(doc_ids)
     return final_index, index2wikiid
+
+
+if __name__ == "__main__":
+    spacy_model = spacy.load('en_core_web_sm')
+    df = pd.read_csv(join(DATAPATH_PROCESSED, "nq_dev_train_wiki_text.csv"))
+    inverted_index, index2wikiid = create_inverted_index(df, spacy_model)
+    save_index(inverted_index, filename="inverted_index.json")
+    save_index(index2wikiid, filename="index2id.json")
