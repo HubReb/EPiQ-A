@@ -8,7 +8,7 @@ Currently, the code is only evaluated on the Natural Question dataset.
 
 ### Construction of the inverted index
 
-We roughly follow the approach outlined in [2], Chapter 2.2). All documents are tokenized and each word is lemmatized.  We then remove stop words and construct an inverted index from the remaining words. The index maps each word to a list of documents that contain the term. We opted for lemmatization instead of stemming as both approaches achieve about the same results for English. Furthermore, we do not need to add a new dependency. As such, tokenization and lemmatization both use the [spacy library](https://spacy.io/).
+We roughly follow the approach outlined in [2], Chapter 2.2. All documents are tokenized and each word is lemmatized.  We then remove stop words and construct an inverted index from the remaining words. The index maps each word to a list of documents that contain the term. We opted for lemmatization instead of stemming as both approaches achieve about the same results for English. Furthermore, we do not need to add a new dependency. As such, tokenization and lemmatization both use the [spacy library](https://spacy.io/).
 
 ### Model training
 
@@ -17,7 +17,7 @@ We use two bag-of-words ranking models:
 * TFIDF (using [sklearn](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html)) and ranking according to cosine similarity.
 
 Please see their corresponding documentations for further details as we use the packages default hyperparameters, except for the TfidfVectorizer's minimum document frequency parameter (min_df).
-Note that the first time you train a model will take significantly longer. We apply tokenization, lemmatisation and stop word removal to the document collection and save the processed data to disk. This takes several hours. All further training runs will access this data and thus only take a few minutes to complete. 
+Note that the first time you train a model takes significantly longer. We apply tokenization, lemmatisation and stop word removal to the document collection and save the processed data to disk. This takes several hours. All further training runs will access this data and thus only take a few minutes to complete. 
 
 
 The construction of the inverted index and all training steps are contained in train.sh. Simply run
