@@ -20,7 +20,7 @@ def create_inverted_index(dataframe, model):
         index2wikiid[index] = wiki_key
         for word in content:
             inverted_index[word].add(index)
-        if index % 100 == 0:
+        if index % 10000 == 0:
             print(index/total)
     final_index = {}
     for index, doc_ids in inverted_index.items():

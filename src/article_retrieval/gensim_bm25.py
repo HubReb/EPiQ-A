@@ -65,7 +65,7 @@ class Okapi25:
                 ranked list of wikipedia article identifiers
     """
 
-    def __init__(self, k=1.5, b=0.75, epsilon=0.25, filename="opakibm25.pkl"):
+    def __init__(self, k=1.5, b=0.75, epsilon=0.25, filename="okapibm25.pkl"):
         """
         Parameters:
             k: float
