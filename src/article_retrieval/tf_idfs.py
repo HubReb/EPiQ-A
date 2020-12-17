@@ -111,7 +111,7 @@ class TFIDFmodel:
         query_vector = self.vectorizer.transform(query)
         for doc in docs:
             document_vector = self.index2vector[doc]
-            similarities.append((doc, cosine_similarity(query_vector, document_vector)))
+            similarities.append((self.index2key[str(doc)], cosine_similarity(query_vector, document_vector)))
         ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
         ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
         return [self.index2key[str(doc)] for doc in ranked_docs]
@@ -132,7 +132,7 @@ class TFIDFmodel:
         query = [" ".join(query)]
         query_vector = self.vectorizer.transform(query)
         for index, doc in self.index2vector.items():
-            similarities.append((index, cosine_similarity(query_vector, doc)))
+            similarities.append((self.index2key[str(index)], cosine_similarity(query_vector, doc)))
         ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
         ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
-        return [self.index2key[str(doc)] for doc in ranked_docs]
+        return ranked_docs

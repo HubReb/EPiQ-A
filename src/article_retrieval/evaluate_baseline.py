@@ -12,7 +12,7 @@ import pandas as pd
 from query_index import query_index, query_processing
 from gensim_bm25 import Okapi25
 
-from config import DATAPATH_PROCESSED
+from config import DATAPATH_PROCESSED, DATAPATH
 
 
 def load_from_pickle(filename):
@@ -106,13 +106,14 @@ def evaluate_okapi(query, correct_id, bm_model):
     return reciprocal, correct
 
 
+# TODO: Clean these two function up
 def evaluate(datapath):
     """Run evaluation process."""
     model = spacy.load('en_core_web_sm')
     bm_model, inverted_index = load_utilities_for_bm()
     tfidf_model, inverted_index = load_utilities_for_tfidf()
     query_models = [bm_model, tfidf_model]
-    # test set
+    # dev set
     (bm_mmr, bm_pr_k), (tf_mmr, tf_pr_k) = evaluate_models(join(datapath, "nq_dev.csv"), model, query_models)
     print("Okapi BM25 results on dev set:")
     print(f"MMR: {bm_mmr}, Precision@1: {tf_pr_k}")
@@ -127,5 +128,19 @@ def evaluate(datapath):
     # TODO: Fine-tune models on development set
 
 
+def evaluate_test(datapath):
+    """Run evaluation process on test set."""
+    model = spacy.load('en_core_web_sm')
+    bm_model, inverted_index = load_utilities_for_bm()
+    tfidf_model, inverted_index = load_utilities_for_tfidf()
+    query_models = [bm_model, tfidf_model]
+    (bm_mmr, bm_pr_k), (tf_mmr, tf_pr_k) = evaluate_models(join(datapath, "natural_questions_dev.csv"), model, query_models)
+    print("Okapi BM25 results on test set:")
+    print(f"MMR: {bm_mmr}, Precision@1: {bm_pr_k}")
+    print("TFIDF with cosine similarity results on test set:")
+    print(f"MMR: {tf_mmr}, Precision@1: {tf_pr_k}")
+
+
 if __name__ == "__main__":
+    evaluate_test(DATAPATH)
     evaluate(DATAPATH_PROCESSED)
