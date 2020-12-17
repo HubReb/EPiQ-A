@@ -8,7 +8,7 @@ Currently, the code is only evaluated on the Natural Question dataset.
 
 ### Construction of the inverted index
 
-We roughly follow the approach outlined in [2], Chapter 2.2). All documents are tokenized and each word is lemmatized.  We then remove stop words and construct an inverted index from the remaining words. The index maps each word to a list of documents that contain the term. We opted for lemmatization instead of stemming as both approaches achieve about the same results for English. Furthermore, we do not need to add a new dependency. As such, tokenization and lemmatization both use the [spacy library](( https://spacy.io/ ).
+We roughly follow the approach outlined in [2], Chapter 2.2). All documents are tokenized and each word is lemmatized.  We then remove stop words and construct an inverted index from the remaining words. The index maps each word to a list of documents that contain the term. We opted for lemmatization instead of stemming as both approaches achieve about the same results for English. Furthermore, we do not need to add a new dependency. As such, tokenization and lemmatization both use the [spacy library](https://spacy.io/).
 
 ### Model training
 
