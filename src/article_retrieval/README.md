@@ -22,6 +22,10 @@ python evaluate_baseline.py
 to evaluate the trained models.
 
 
+## external code
+
+All adapted, external code is marked in the files utilizing it. External packages are already included in the requirements.txt file.
+
 
 
 ## References
