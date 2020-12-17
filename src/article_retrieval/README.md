@@ -17,7 +17,7 @@ to train one ranking model with Okapi BM 25 weights [1] (using gensim's summariz
 
 There is only one evaluation file at the moment. Simply run
 ```
-python test_baseline.py
+python evaluate_baseline.py
 ```
 to evaluate the trained models.
 
