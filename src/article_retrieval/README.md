@@ -14,7 +14,9 @@ We roughly follow the approach outlined in [2], Chapter 2.2). All documents are 
 
 We use two bag-of-words ranking models:
 * Okapi BM25 [1] (using [gensim's summarization.bm25 module](https://radimrehurek.com/gensim_3.8.3/summarization/bm25.html))
-* TFIDF (using [sklearn](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html)) and ranking according to cosine similarity. Please see their corresponding documentations for further details as weuse the packages default hyperparameters, except for the TfidfVectorizer's minimum document frequency parameter (min_df).
+* TFIDF (using [sklearn](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html)) and ranking according to cosine similarity.
+
+Please see their corresponding documentations for further details as weuse the packages default hyperparameters, except for the TfidfVectorizer's minimum document frequency parameter (min_df).
 Note that the first time you train a model will take significantly longer. We apply tokenization, lemmatisation and stop word removal to the document collection and save the processed data to disk. This takes several hours. All further training runs will access this data and thus only take a few minutes to complete. 
 
 
