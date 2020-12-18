@@ -70,12 +70,13 @@ def evaluate_models(question_file, model, rank_models):
     number_correct_tf = 0
     number_correct_bm = 0
     for query, correct_id in dataset:
-        rank, correct = evaluate_okapi(query, correct_id, bm_model)
-        sum_reciprocals_bm += 1/rank
+        reciprocal, correct = evaluate_okapi(query, correct_id, bm_model)
+        sum_reciprocals_bm += reciprocal
         number_correct_bm += correct
-        rank, correct = evaluate_tf_idf(query, correct_id, tfidf_model)
-        sum_reciprocals_tf += 1/rank
+        reciprocal, correct = evaluate_tf_idf(query, correct_id, tfidf_model)
+        sum_reciprocals_tf += reciprocal
         number_correct_tf += correct
+    print("number", number_of_queries, "sum_reciprocals_bm", sum_reciprocals_bm, "number_correct: ", number_correct_bm)
     return (
         (1/number_of_queries * sum_reciprocals_bm, number_correct_bm/number_of_queries),
         (1/number_of_queries * sum_reciprocals_tf, number_correct_tf/number_of_queries)
