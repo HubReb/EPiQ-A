@@ -98,9 +98,9 @@ class TFIDFmodel:
         Rank select documents to query with with cosine similarity of tf-idf values.
 
         Arguments:
-            docs - list of indices in dataset
             query - processed query that must be lemmatized, tokenized and have had
                 stop words removed
+            docs - list of indices in dataset
 
         Returns:
             ranked list of wikipedia article identifiers corresponding to the indices

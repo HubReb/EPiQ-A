@@ -32,6 +32,7 @@ def query_index(query, inverted_index, model):
     Returns:
         best_doc_guesses - indices of documents that contain words of the query
         query - processed query
+        model - spacy model for lemmatization and stop word list
     """
     stop_words = model.Defaults.stop_words
     document_ids = defaultdict(list)

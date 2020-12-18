@@ -133,6 +133,7 @@ class Okapi25:
 
         Arguments:
             query - processed query
+            docs - indices of documents to calculate score for
 
         Returns:
             A list of wikipedia article identifiers, sorted in decreasing
