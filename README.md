@@ -58,6 +58,7 @@ To extract the relative paragraphs from the articles, we use BM25 (implemented b
 For question answering, transformers provides models that are fine-tuned checkpoints of DistilBERT(a simpler and faster version of Google's BERT model which still keeps most of the original model performance) or BERT, they are fine-tuned using knowledge distillation on SQuAD v1.1. They are models with a span classification head on top for extractive question-answering tasks like SQuAD (a linear layers on top of the hidden-states output to compute span start logits and span end logits).
 
 The pre-trained models distilbert-base-uncased-squad2 and bert-large-uncased-whole-word-masking-finetuned-squad from transformers can tokenize the question context(answer) and find the tokens for the answer. This model can answer "yes/no questions" with a sentence instead of "yes/no" answers, thus we might also solve this problem.
+We built our component upon the blog-post https://programmerbackpack.com/bert-nlp-using-distilbert-to-build-a-question-answering-system/ and adapt the freely available code to our case.
 
 
 ### Experiments 
