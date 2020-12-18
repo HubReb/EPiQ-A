@@ -47,13 +47,7 @@ Note that the natural questions dataset has new articles in the development set,
 We first build an inverted index from the articles in the entire dataset: We lemmatize each tokenized word in the dataset. Then we remove stop words. The remaining words are used to build the index. Each word maps to a list of documents that contain this word.
 
 For querying the document collection, the words in the lemmatised query are mapped to the articles via the inverted index and the retrieved articles are ranked with respect to the query. Currently, we have two ranking, bag-of-words methods implemented: The TF-IDF Weighting introduced in the lecture with cosine similarity to the TF-IDF vector of the query for ranking and Okapi BM25. Note that our current implementation of TF-IDF uses [sklearns](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html) default parameters.
-For the Okapi BM25 we use the implementation provided by the python package [gensim](https://radimrehurek.com/gensim_3.8.3/summarization/bm25.html). The score calculation is as follows: 
-Given a query Q, containing keywords <img src="https://render.githubusercontent.com/render/math?math=q_1, ..., q_n"> the BM25 score of a document D is:
-$score(D,Q) =  \sum_{i=1}^{n}IDF(q_i)\cdot\frac{tf(q_i,Dd\cdot(k_1 +1)}{tf(q_i, d)+k_1\cdot(1-b+b\cdot\frac{|D|}{avgdl})}$
-where $tf(q_i, d)$ is $q_i$'s term frequency in the document $d$ and $avgdl$ is the average document length in our document collection. $k_1$ and $b$ are hyperparameters and for now we keep the gensim default values of $k_1 = 1.5$ and $b=0.75$.
-$IDF(q_i)$is the inverse document frequency weight of the query term $q_i$. Gensim computes it as follows
-$IDF(q_i) = ln(\frac{N - n(q_i) + 0.5}{n(q_i) + 0.5})$ with $N$ as the number of documents in the collection, $n(q_i)$ the number of documents containing $q_i$.
-
+For the Okapi BM25 we use the implementation provided by the python package [gensim](https://radimrehurek.com/gensim_3.8.3/summarization/bm25.html). .
 Regardless of the chosen ranking model we pass the top ten ranked articles to the answer extraction component.
 
 
@@ -175,7 +169,3 @@ Distribution of Named Entity in answer in dependence of question word:
 | who is playing the halftime show at super bowl 2016 | Coldplay with special guest performers Beyoncé and Bruno Mars                                                   | https://en.wikipedia.org//w/index.php?title=Super_Bowl_50_halftime_show&amp;oldid=823813276                   |
 | who won the 2017 sports personality of the year     | Mo Farah                                                                                                        | https://en.wikipedia.org//w/index.php?title=2017_BBC_Sports_Personality_of_the_Year_Award&amp;oldid=816169117 |
 | name of black man in to kill a mockingbird                         | Thomas `` Tom '' Robinson                                                                                                                                | https://en.wikipedia.org//w/index.php?title=List_of_To_Kill_a_Mockingbird_characters&amp;oldid=835936451                               |
-
-
-
-\end{markdown}
