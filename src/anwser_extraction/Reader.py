@@ -15,39 +15,12 @@ from transformers import BertForQuestionAnswering
 from transformers import BertTokenizer
 
 
-
-# We may disgard this part
-class QuestionProcessor:
-    """
-    Remove stop words, Tokenize, Part of Speech tags,
-    Keep only the essential parts: nouns, proper nouns, and adjectives
-
-    Example:
-        Original question: “Whats the capital city of France?”
-     => Processed question: “capital city France”
-    """
-
-    def __init__(self, nlp):
-        self.pos = ["NOUN", "PROPN", "ADJ"]
-        self.nlp = nlp
-
-    def process(self, text):
-        tokens = self.nlp(text)
-        return ' '.join(token.text for token in tokens if token.pos_ in self.pos)
-
 class ContextRetriever:
 
-    """
-
-
-    Searching for relevant context(Context retriever)
-
-    Preprocess: Tokenize, Lemmatize
-
+    """Searching for relevant context(Context retriever)
+    Preprocess: Tokenize, Lemmatize(optional)
     Using BM25 to rank a list of passages based on a given query.
-
     Extract the top N results from BM25 and build a paragraph out of all those N sentences.
-
 
     :param nlp: spacy
     :param n_passage: select the n top relevant passages by BM25
@@ -55,7 +28,6 @@ class ContextRetriever:
                       - True: tokenize and lemmatize the sentences
                       - False: only tokenize the sentences
     """
-
     def __init__(self, nlp, n_passages , preprocess = True):
         self.nlp = nlp
         self.n_passages = n_passages
@@ -71,7 +43,7 @@ class ContextRetriever:
         else:
             return [token for token in self.nlp(sentence)]
 
-    def getContext(self, articles: str, question: str):
+    def get_n_top_passages(self, articles: str, question: str):
         """
         :param articles: the top n answer relevant articles(str)
         :param question: preoprocessed question(str)
@@ -105,7 +77,7 @@ class ContextRetriever:
         return questionContext
 
 
-class AnswerRetriever:
+class AnswerExtracter:
     """
     Using the pretrained models from the transformers library for:
         - tokenization: to tokenize the question and the question context
@@ -114,11 +86,17 @@ class AnswerRetriever:
     Convert answer tokens back to string and return the result
     """
 
-    def getAnswer(self, question, questionContext):
-        #Docu
 
-        tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-        model = DistilBertForQuestionAnswering.from_pretrained('distilbert-base-uncased')
+    def getAnswer(self, question, questionContext, model="DistilBERT"):
+        ###we’ll need to make all the vectors the same size by padding shorter sentences with the token id 0
+
+        if model == "BERT":
+            model = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
+            tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+        else:
+            tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased', return_token_type_ids=True)
+            model = DistilBertForQuestionAnswering.from_pretrained('distilbert-base-uncased-distilled-squad')
 
         inputs = tokenizer(question, questionContext, return_tensors='pt')
         start_positions = torch.tensor([1])
@@ -127,131 +105,36 @@ class AnswerRetriever:
         outputs = model(**inputs, start_positions=start_positions, end_positions=end_positions)
         start_scores = outputs.start_logits
         end_scores = outputs.end_logits
-        tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].numpy()[0])
 
-        #print(all_tokens)
-
-        #answer = ' '.join(all_tokens[tf.math.argmax(start_scores, 1)[0]: tf.math.argmax(end_scores, 1)[0] + 1])
         start_index = torch.argmax(start_scores)
-
-
         end_index = torch.argmax(end_scores)
 
-        answer = ' '.join(tokens[start_index:end_index + 1])
-        print(tokens)
-        print(start_index)
-        print(end_index)
-
-
-        return answer
-
-
-
-    def getAnswer_2(self, question, questionContext):
-        # Alternative 1
-
-        # executing these commands for the first time initiates a download of the
-        # model weights to ~/.cache/torch/transformers/
-        tokenizer = AutoTokenizer.from_pretrained("deepset/bert-base-cased-squad2")
-        model = AutoModelForQuestionAnswering.from_pretrained("deepset/bert-base-cased-squad2")
-        # 1. TOKENIZE THE INPUT
-        inputs = tokenizer.encode_plus(question, questionContext, return_tensors="pt")
-
-        # 2. OBTAIN MODEL SCORES
-        # a span predictor
-        answer_start_scores, answer_end_scores = model(**inputs)
-        print(answer_start_scores) # => start_logits
-        answer_start = torch.argmax(answer_start_scores)  # get the most likely beginning of answer with the argmax of the score
-        answer_end = torch.argmax(answer_end_scores) + 1  # get the most likely end of answer with the argmax of the score
-        # 3. GET THE ANSWER SPAN
-        # grab all the tokens in the span and convert tokens back to words!
-        anwser = tokenizer.convert_tokens_to_string(
-            tokenizer.convert_ids_to_tokens(inputs["input_ids"][0][answer_start:answer_end]))
-        return anwser
-
-
-
-    def getAnswer_0(self, question, questionContext, model_name):
-        # worked but weird anwser span
-
-
-        tokenizer = DistilBertTokenizer.from_pretrained(model_name)
-        model = DistilBertForQuestionAnswering.from_pretrained(model_name)
-
-        input_dict = tokenizer(question, questionContext, return_tensors='tf')
-        #print(input_dict)
-
-        outputs = model(input_dict)
-        start_logits = outputs.start_logits
-        end_logits = outputs.end_logits
-
-        all_tokens = tokenizer.convert_ids_to_tokens(input_dict["input_ids"].numpy()[0])
-        answer = ' '.join(all_tokens[tf.math.argmax(start_logits, 1)[0]: tf.math.argmax(end_logits, 1)[0] + 1])
-
-        return answer
-
-    def getAnswer_3(self, question, questionContext):
-        #ORIGINAL
-        distilBertTokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased', return_token_type_ids=True)
-        distilBertForQuestionAnswering = DistilBertForQuestionAnswering.from_pretrained(
-            'distilbert-base-uncased-distilled-squad')
-
-        encodings = distilBertTokenizer.encode_plus(question, questionContext)
-
-        inputIds, attentionMask = encodings["input_ids"], encodings["attention_mask"]
-
-
-        scoresStart, scoresEnd = distilBertForQuestionAnswering(torch.tensor([inputIds]),
-                                                                attention_mask=torch.tensor([attentionMask]))
-
-        tokens = inputIds[torch.argmax(scoresStart): torch.argmax(scoresEnd) + 1]
-
-        answerTokens = distilBertTokenizer.convert_ids_to_tokens(tokens, skip_special_tokens=True)
-        return distilBertTokenizer.convert_tokens_to_string(answerTokens)
-
-    def getAnswer_(self, question, questionContext):
-        model = DistilBertForQuestionAnswering.from_pretrained('distilbert-base-uncased-distilled-squad')
-
-        # Tokenizer
-        tokenizer = BertTokenizer.from_pretrained('distilbert-base-uncased')
-        encoding = tokenizer.encode_plus(text=question, text_pair=questionContext, add_special=True)
-
+        encoding = tokenizer.encode_plus(question, questionContext)
         inputs = encoding['input_ids']  # Token embeddings
-        sentence_embedding = encoding['token_type_ids']  # Segment embeddings
         tokens = tokenizer.convert_ids_to_tokens(inputs)  # input tokens
-        start_scores, end_scores = model(torch.tensor([inputs]),torch.tensor([sentence_embedding]))
-        start_index = torch.argmax(start_scores)
-
-        end_index = torch.argmax(end_scores)
 
         answer = ' '.join(tokens[start_index:end_index + 1])
-
         return answer
+
 
 
 if __name__ == '__main__':
 
-
-    articles = "Paris is the capital and most populous city of France, with an estimated population of 2,148,271 residents as of 2020, in an area of 105 square kilometres . Since the 17th century, Paris has been one of Europe's major centres of finance, diplomacy, commerce, fashion, science and arts. The City of Paris is the centre and seat of government of the Île-de-France, or Paris Region, which has an estimated official 2020 population of 12,278,210, or about 18 percent of the population of France. "
-    originalQuestion = "What is the capital city of France?"
+    articles = "The predominant language is Cantonese, a variety of Chinese originating in Guangdong. It is spoken by 94.6 per cent of the population, 88.9 per cent as a first language and 5.7 per cent as a second language. Slightly over half the population (53.2 per cent) speaks English, the other official language; 4.3 per cent are native speakers, and 48.9 per cent speak English as a second language Code-switching, mixing English and Cantonese in informal conversation, is common among the bilingual population. Post-handover governments have promoted Mandarin, which is currently about as prevalent as English; 48.6 per cent of the population speaks Mandarin, with 1.9 per cent native speakers and 46.7 per cent speaking it as a second language. Traditional Chinese characters are used in writing, rather than the simplified characters used on the mainland. "
+    question = "what's the language of hongkong"
 
     nlp = spacy.load('en_core_web_sm')
-
     nlp.add_pipe(nlp.create_pipe('sentencizer'))
 
-
-    #print(sentences)
-    questionProcessor = QuestionProcessor(nlp)
     contextRetriever = ContextRetriever(nlp, 1, preprocess = True)  # top n result of BM25
 
-    questionContext = contextRetriever.getContext(articles, questionProcessor.process(originalQuestion))
+    questionContext = contextRetriever.get_n_top_passages(articles, question)
 
-    answerRetriever = AnswerRetriever()
-    answer = answerRetriever.getAnswer(originalQuestion, questionContext)# 'distilbert-base-uncased'
+    answerExtracter = AnswerExtracter()
+    answer = answerExtracter.getAnswer(question, questionContext) # model = ''
     #print(questionContext)
 
-    print ("Original Question: ", originalQuestion)
-    print ("Preprocessed Question: ", questionProcessor.process(originalQuestion))
+    print ("Question: ", question)
     print('Text: ', articles)
     print("Question Context: ", questionContext)
 
