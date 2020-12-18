@@ -114,10 +114,11 @@ class Okapi25:
             similarity.
         """
 
+        query = " ".join(query)
         scores = self.model.get_scores(query)
         scores_index_tuples = [(index, score) for index, score in enumerate(scores)]
         ranked_scores = sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)
-        return [self.index2wikiid[score_tuple[0]] for score_tuple in ranked_scores]
+        return [self.index2wikiid[str(score_tuple[0])] for score_tuple in ranked_scores]
 
     def rank_docs(self, query, docs):
         """
@@ -138,6 +139,7 @@ class Okapi25:
             similarity.
         """
 
+        query = " ".join(query)
         scores_index_tuples = [(index, self.model.get_score(query, docs[index])) for index in docs]
         ranked_scores = sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)
-        return [self.index2wikiid[score_tuple[0]] for score_tuple in ranked_scores]
+        return [self.index2wikiid[str(score_tuple[0])] for score_tuple in ranked_scores]

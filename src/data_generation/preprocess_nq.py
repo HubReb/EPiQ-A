@@ -35,7 +35,7 @@ def main():
         "##  See also"
         }
     dev = args.subset == 'dev'
-    totals = {'train': 307000, 'dev': 7830}
+    totals = {'train': 307373, 'dev': 7830}
     pbar = tqdm(total=totals[args.subset])
     nat_data = pd.DataFrame(columns=['Question', 'Answer', 'Wikipedia_ID'])
     url_to_text = pd.DataFrame(columns=['Wikipedia_ID', 'Text'])
