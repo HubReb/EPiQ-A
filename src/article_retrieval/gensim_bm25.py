@@ -61,6 +61,7 @@ class Okapi25:
             Rank a subset of the docs in self.doc_freqs against a query.
 
             query - processed query
+            docs - indices of documents to calculate score for
             Returns:
                 ranked list of wikipedia article identifiers
     """
