@@ -1,3 +1,7 @@
+# We built our component upon the blog-post
+# https://programmerbackpack.com/bert-nlp-using-distilbert-to-build-a-question-answering-system/
+# and adapt the freely available code to our case
+
 from gensim.summarization.bm25 import BM25
 import torch
 from transformers import DistilBertTokenizer, TFDistilBertForQuestionAnswering
@@ -192,21 +196,23 @@ if __name__ == '__main__':
 
     nlp = spacy.load('en_core_web_sm')
 
-    nlp.add_pipe(nlp.create_pipe('sentencizer'))
+    nlp.add_pipe(nlp.create_pipe('sentenci'
+                                 'zer'))
     doc = nlp(text)
     sentences = [sent.string.strip() for sent in doc.sents]
     #print(sentences)
     questionProcessor = QuestionProcessor(nlp)
     contextRetriever = ContextRetriever(nlp, 10)
-    answerRetriever = AnswerRetriever()
 
     questionContext = contextRetriever.getContext(sentences, questionProcessor.process(originalQuestion))
 
+    answerRetriever = AnswerRetriever()
+    answer = answerRetriever.getAnswer(originalQuestion, questionContext)
     #print(questionContext)
 
     print ("Original Question: ", originalQuestion)
     print ("Preprocessed Question: ", questionProcessor.process(originalQuestion))
-    answer = answerRetriever.getAnswer(originalQuestion, questionContext)
+
     print ("Anwser: ", answer)
 
 

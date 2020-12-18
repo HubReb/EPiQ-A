@@ -126,15 +126,15 @@ Number of documents in NaturalQuestions before/after preprocessing (reduction du
 
 
 85 \% of questions in ConvQuestions contain one of the following question words:
-![Distribution of question words for ConvQuestions](figures/CQ_question_word_types.png "Distribution of question words for ConvQuestions")
+<img src="/figures/CQ_question_word_types.png" width="420" />
 
 88 \% of questions in NaturalQuestions contain one of the following question words:
-![Distribution of question words for NaturalQuestions](figures/NQ_question_word_types.png "Distribution of question words for NaturalQuestions")
+<img src="/figures/NQ_question_word_types.png" width="420" />
 
 Top 10 of the most frequent auxiliary verbs or other words in NaturalQuestions when there is no w-question:
-![Distribution of auxiliary words for NaturalQuestions](figures/NQ_aux_types.png "Distribution of auxiliary words for NaturalQuestions")
+<img src="/figures/NQ_aux_types.png" width="420" />
 
-Distribution of Named Entity in answer in dependence of question word:
+Distribution of Named Entity in answer in dependence of question word (NaturalQuestions dataset):
 
 * **who**
 ![Distribution of Named Entities for who-questions](figures/who.png "Distribution of Named Entities for who-questions")
@@ -166,7 +166,7 @@ Distribution of Named Entity in answer in dependence of question word:
 
 | Question                                            | Answer                                                                                                          | Wikipedia_ID                                                                                                  |
 |:----------------------------------------------------|:----------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------|
-| what do the 3 dots mean in math                     | the therefore sign ( $\therefore$ ) is generally used before a logical consequence , such as the conclusion of a syllogism | https://en.wikipedia.org//w/index.php?title=Therefore_sign&amp;oldid=815234923                                |
+| what do the 3 dots mean in math                     | the therefore sign ( ∴ ) is generally used before a logical consequence , such as the conclusion of a syllogism | https://en.wikipedia.org//w/index.php?title=Therefore_sign&amp;oldid=815234923                                |
 | who is playing the halftime show at super bowl 2016 | Coldplay with special guest performers Beyoncé and Bruno Mars                                                   | https://en.wikipedia.org//w/index.php?title=Super_Bowl_50_halftime_show&amp;oldid=823813276                   |
 | who won the 2017 sports personality of the year     | Mo Farah                                                                                                        | https://en.wikipedia.org//w/index.php?title=2017_BBC_Sports_Personality_of_the_Year_Award&amp;oldid=816169117 |
 | name of black man in to kill a mockingbird                         | Thomas `` Tom '' Robinson                                                                                                                                | https://en.wikipedia.org//w/index.php?title=List_of_To_Kill_a_Mockingbird_characters&amp;oldid=835936451                               |
