@@ -129,12 +129,12 @@ Number of documents in NaturalQuestions before/after preprocessing (reduction du
 <img src="/figures/CQ_question_word_types.png" width="420" />
 
 88 \% of questions in NaturalQuestions contain one of the following question words:
-![Distribution of question words for NaturalQuestions](figures/NQ_question_word_types.png "Distribution of question words for NaturalQuestions")
+<img src="/figures/NQ_aux_types.png" width="420" />
 
 Top 10 of the most frequent auxiliary verbs or other words in NaturalQuestions when there is no w-question:
-![Distribution of auxiliary words for NaturalQuestions](figures/NQ_aux_types.png "Distribution of auxiliary words for NaturalQuestions")
+<img src="/figures/NQ_aux_types.png" width="420" />
 
-Distribution of Named Entity in answer in dependence of question word:
+Distribution of Named Entity in answer in dependence of question word (NaturalQuestions dataset):
 
 * **who**
 ![Distribution of Named Entities for who-questions](figures/who.png "Distribution of Named Entities for who-questions")
