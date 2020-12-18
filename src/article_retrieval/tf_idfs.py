@@ -114,7 +114,7 @@ class TFIDFmodel:
             similarities.append((self.index2key[str(doc)], cosine_similarity(query_vector, document_vector)))
         ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
         ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
-        return [self.index2key[str(doc)] for doc in ranked_docs]
+        return ranked_docs
 
     def rank(self, query):
         """Rank all documents to query with cosine similarity of tf-idf values
