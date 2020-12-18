@@ -1,19 +1,12 @@
-# We built our component upon the blog-post
-# https://programmerbackpack.com/bert-nlp-using-distilbert-to-build-a-question-answering-system/
-# and adapt the freely available code to our case
-
 from gensim.summarization.bm25 import BM25
 import torch
 from transformers import DistilBertTokenizer, TFDistilBertForQuestionAnswering
 import tensorflow as tf
 from transformers import DistilBertTokenizer, DistilBertForQuestionAnswering
 import spacy
-
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
-
 from transformers import BertForQuestionAnswering
 from transformers import BertTokenizer
-
 
 class ContextRetriever:
 
@@ -25,10 +18,11 @@ class ContextRetriever:
     :param nlp: spacy
     :param n_passage: select the n top relevant passages by BM25
     :param preprocess: default  = True.
-                      - True: tokenize and lemmatize the sentences
-                      - False: only tokenize the sentences
+            - True: tokenize and lemmatize the sentences(for real case)
+            - False: only tokenize the sentences(for testing)
     """
-    def __init__(self, nlp, n_passages , preprocess = True):
+
+    def __init__(self, nlp, n_passages, preprocess = True):
         self.nlp = nlp
         self.n_passages = n_passages
         self.preprocess = preprocess
@@ -36,12 +30,15 @@ class ContextRetriever:
     def tokenize(self, sentence): #### we dont need on testing!
         """
         :param sentence: a sentence string
-        :return: a list of tokenized(and lemmatized) strings
+        :return:
+             - if preprocess == True: a list of tokenized and lemmatized strings
+             - else: a list of tokenized strings
         """
+
         if self.preprocess == True:
-            return [token.lemma_ for token in self.nlp(sentence)]
+            return [token.lemma_.lower() for token in self.nlp(sentence)]
         else:
-            return [token for token in self.nlp(sentence)]
+            return [token.lower() for token in self.nlp(sentence)]
 
     def get_n_top_passages(self, articles: str, question: str):
         """
@@ -51,41 +48,29 @@ class ContextRetriever:
         """
 
         doc = self.nlp(articles)
-        sentences = [sent.string.strip() for sent in doc.sents] # a list of sentences of the artivlcles
+        sentences = [sent.string.strip() for sent in doc.sents] # a list of sentences of the articles
 
-        documents = [] # a list of lists of tokens(sentences)
-        for sent in sentences:
-            documents.append(self.tokenize(sent))  # self.tokenize(sent): a list of tokens
+        # a list of lists of tokens(a list of sentences)
+        documents = [self.tokenize(sent) for sent in sentences] # self.tokenize(sent): a list of tokens
 
-        bm25 = BM25(documents)
-        scores = bm25.get_scores(self.tokenize(question))
-
-        results = {}
-        for index, score in enumerate(scores):
-            results[index] = score
-
-        sorted_results = {k: v for k, v in sorted(results.items(), key=lambda item: item[1], reverse=True)}
-        results_list = list(sorted_results.keys())
+        bm25_scores = BM25(documents).get_scores(self.tokenize(question))
 
         # get top n relevant passages
-        final_results = results_list if len(results_list) < self.n_passages else results_list[:self.n_passages]
+        best_docs = sorted(range(len(bm25_scores)), key=lambda i: scores[i])[self.n_passages*(-1):]
 
         questionContext = ""
-        for fr in final_results:
+        for fr in best_docs:
             questionContext = questionContext + " ".join(documents[fr])
 
         return questionContext
 
 
 class AnswerExtracter:
-    """
+    """Extract exact answer from the extracted passages
     Using the pretrained models from the transformers library for:
         - tokenization: to tokenize the question and the question context
         - question answering:  to find the tokens for the answer
-
-    Convert answer tokens back to string and return the result
     """
-
 
     def getAnswer(self, question, questionContext, model="DistilBERT"):
         ###we’ll need to make all the vectors the same size by padding shorter sentences with the token id 0
@@ -93,7 +78,6 @@ class AnswerExtracter:
         if model == "BERT":
             model = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
             tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-
         else:
             tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased', return_token_type_ids=True)
             model = DistilBertForQuestionAnswering.from_pretrained('distilbert-base-uncased-distilled-squad')
@@ -106,6 +90,7 @@ class AnswerExtracter:
         start_scores = outputs.start_logits
         end_scores = outputs.end_logits
 
+        # answer span predictor
         start_index = torch.argmax(start_scores)
         end_index = torch.argmax(end_scores)
 
@@ -113,10 +98,9 @@ class AnswerExtracter:
         inputs = encoding['input_ids']  # Token embeddings
         tokens = tokenizer.convert_ids_to_tokens(inputs)  # input tokens
 
+        # convert answer tokens back to string and return the result
         answer = ' '.join(tokens[start_index:end_index + 1])
         return answer
-
-
 
 if __name__ == '__main__':
 
