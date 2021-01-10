@@ -53,7 +53,7 @@ Regardless of the chosen ranking model we pass the top ten ranked articles to th
 
 There are two main tasks to extract accurate answers to questions in the retrieved articles: 1) retrieve informative/relevant paragraphs in the article, and 2) extract the answer from those paragraphs. 
 
-To extract the relative paragraphs from the articles, we use BM25 (implemented by gensim). It takes a query and sorts the paragraphs based on how relevant they are for the query. Then the top N results will be extracted by BM25 and we will build a paragraph out of all those N sentences as the final informative answer containing context for the question.
+To extract the relative paragraphs from the articles, we use BM25 (implemented by gensim). It takes a query and sorts the paragraphs based on how relevant they are for the query. Then the top N paragraphs will be extracted by BM25 and we will build a article out of all those top N paragraphs as the final informative answer containing context for the question.
 
 For question answering, transformers provides models that are fine-tuned checkpoints of DistilBERT(a simpler and faster version of Google's BERT model which still keeps most of the original model performance) or BERT, they are fine-tuned using knowledge distillation on SQuAD v1.1. They are models with a span classification head on top for extractive question-answering tasks like SQuAD (a linear layers on top of the hidden-states output to compute span start logits and span end logits).
 
