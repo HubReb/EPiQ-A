@@ -42,21 +42,22 @@ class ContextRetriever:
 
     def get_n_top_passages(self, articles: str, question: str):
         """
-        :param articles: the top n answer relevant articles(str)
+        :param articles: the joint top n answer relevant articles(str)
         :param question: preoprocessed question(str)
         :return: jointed top n passages from the articles as a final article(str)
         """
 
-        doc = self.nlp(articles)
-        sentences = [sent.string.strip() for sent in doc.sents] # a list of sentences of the articles
+        # doc = self.nlp(articles)
+
+        passages = [passage.strip() for passage in articles.splitlines()] # a list of sentences of the articles
 
         # a list of lists of tokens(a list of sentences)
-        documents = [self.tokenize(sent) for sent in sentences] # self.tokenize(sent): a list of tokens
+        documents = [self.tokenize(passage) for passage in passages] # self.tokenize(sent): a list of tokens
 
         bm25_scores = BM25(documents).get_scores(self.tokenize(question))
 
         # get top n relevant passages
-        best_docs = sorted(range(len(bm25_scores)), key=lambda i: scores[i])[self.n_passages*(-1):]
+        best_docs = sorted(range(len(bm25_scores)), key=lambda i: bm25_scores[i])[self.n_passages*(-1):]
 
         questionContext = ""
         for fr in best_docs:
@@ -104,7 +105,7 @@ class AnswerExtracter:
 
 if __name__ == '__main__':
 
-    articles = "The predominant language is Cantonese, a variety of Chinese originating in Guangdong. It is spoken by 94.6 per cent of the population, 88.9 per cent as a first language and 5.7 per cent as a second language. Slightly over half the population (53.2 per cent) speaks English, the other official language; 4.3 per cent are native speakers, and 48.9 per cent speak English as a second language Code-switching, mixing English and Cantonese in informal conversation, is common among the bilingual population. Post-handover governments have promoted Mandarin, which is currently about as prevalent as English; 48.6 per cent of the population speaks Mandarin, with 1.9 per cent native speakers and 46.7 per cent speaking it as a second language. Traditional Chinese characters are used in writing, rather than the simplified characters used on the mainland. "
+    articles = "The predominant language is Cantonese, a variety of Chinese originating in Guangdong. It is spoken by 94.6 per cent of the population, 88.9 per cent as a first language and 5.7 per cent as a second language. Slightly over half the population (53.2 per cent) speaks English, the other official language; 4.3 per cent are native speakers, and 48.9 per cent speak English as a second language Code-switching, mixing English and Cantonese in informal conversation, is common among the bilingual population. \nPost-handover governments have promoted Mandarin, which is currently about as prevalent as English; 48.6 per cent of the population speaks Mandarin, with 1.9 per cent native speakers and 46.7 per cent speaking it as a second language. \nTraditional Chinese characters are used in writing, rather than the simplified characters used on the mainland. "
     question = "what's the language of hongkong"
 
     nlp = spacy.load('en_core_web_sm')
