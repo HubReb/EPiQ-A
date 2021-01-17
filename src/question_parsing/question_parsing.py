@@ -356,7 +356,7 @@ def parse_question(
 
     return Question(
         terms=postprocessor(spacy_question),
-        bert_tokens=BertTokenizer.toke
+        bert_tokens=BertTokenizer.token,
         pos_tags=None,
         synonyms=postprocessor(
             get_synonyms(spacy_question, synonym_method, max_synonyms)
