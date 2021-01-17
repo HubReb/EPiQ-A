@@ -28,8 +28,13 @@ class CombinedModel:
         # Missing: How to get text from ids
         top_paragraphs = ?
         
+        possible_ansers = []
         for context in top_paragraphs:
             answer = self.answer_extraction_model.getAnswer(query, context)
+            possible_ansers.append(answer)
+        
+        # Irgendein Code, um eine gute Answer zurückzugeben
+        raise NotImplementedError
         
         
         

@@ -100,7 +100,13 @@ def postprocess_string(
     filter_stopwords: bool = False,
 ) -> str:
     """
-    Docstring
+    Performs preprocessing operations on the token level.
+    Assumes str as input.
+    This includes:
+      * lemmatising
+      * stemming
+      * lowercasing
+      * stopword filtering
     """
     assert not lemmatise or not stem, "Can't both stem and lemmatise"
     if tolower:
@@ -134,7 +140,13 @@ def postprocess_spacy_token(
     filter_stopwords: bool = False,
 ) -> str:
     """
-    Docstring
+    Performs preprocessing operations on the token level.
+    Assumes spacy token as input.
+    This includes:
+      * lemmatising
+      * stemming
+      * lowercasing
+      * stopword filtering
     """
     assert not lemmatise or not stem, "Can't both stem and lemmatise"
     term_as_str = str(term)
@@ -154,6 +166,14 @@ def postprocess_spacy_token(
 
 
 def postprocess(terms: Tokens, **kwargs) -> List[str]:
+    """
+    Performs normalisation operations on a sequence of tokens.
+    This includes:
+      * lemmatising
+      * stemming
+      * lowercasing
+      * stopword filtering
+    """
     processed_terms = []
     for term in terms:
         if isinstance(term, str):
@@ -320,6 +340,7 @@ def parse_question(
     stem=False,
     tolower=False,
     filter_stopwords=False,
+    pretrained_tokenizer="DistilBERT"
 ) -> Question:
     """
     Main method for parsing a question.
@@ -335,6 +356,7 @@ def parse_question(
 
     return Question(
         terms=postprocessor(spacy_question),
+        bert_tokens=BertTokenizer.toke
         pos_tags=None,
         synonyms=postprocessor(
             get_synonyms(spacy_question, synonym_method, max_synonyms)
