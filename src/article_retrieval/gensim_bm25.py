@@ -97,25 +97,49 @@ class Okapi25:
         processed_corpus, self.index2wikiid = load_corpus(dataframe_filename)
         self.model = BM25(processed_corpus)
 
-    def rank(self, query):
+    def rank(self, query_tuple=None, query=None, evaluate_component=False):
         """
         Rank all documents in self.models.doc_freqs against a query.
 
         All documents in the corpus the BM25 model was trained on are ranked in
         decreasing order against a query. The self.doc_freqs indices are mapped
         to the wikipedia article identifiers before the ranked list is returned.
-        The query must have already been tokenized, lemmatized and have had
-        its stop words removed.
+        The query must either have already been tokenized, lemmatized and have had
+        its stop words removed be a namedTuple as created by the question_parsing.
 
         Arguments:
-            query - processed query
+            query_tuple (default: None) - namedTuple of Question as defined by
+                question_parsing component, cannot be combined with query or
+                evaluate_component flag
+            query (default: None) - processed query that must be lemmatized,
+                 tokenized and have had stop words removed, must be set with
+                 evaluate_component
+            evaluate_component (default: False) - boolean value determining if
+                the evaluation setup is executed
 
         Returns:
-            A list of wikipedia article identifiers, sorted in decreasing
-            similarity.
+            ranked list of wikipedia article identifiers corresponding to the indices
+            of all documents in the dataset
+        Raises:
+            TypeError if both query_tuple and query or evaluate_component are given
+            TypeError if neither query_tuple nor query and evaluate_component are given
         """
+        if query_tuple:
+            if query or evaluate_component:
+                raise TypeError(
+                    "namedTuple Question is mutuably exlusive with evaluation_component"
+                    "flag and processed query string!"
+                )
+        else:
+            if not (query and evaluate_component):
+                raise TypeError(
+                    "Evaluation setup requires both processed question and evaluate_component flag"
+                )
 
-        query = " ".join(query)
+        if not query_tuple:
+            query = [" ".join(query)]
+        else:
+            query = query["terms"]
         scores = self.model.get_scores(query)
         scores_index_tuples = [(index, score) for index, score in enumerate(scores)]
         ranked_scores = sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)
