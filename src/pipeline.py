@@ -14,7 +14,7 @@ class CombinedModel:
             bm_model, bm_inverted_index = load_utilities_for_bm()
             self.article_model = bm_model
             self.inverted_index = bm_inverted_index
-        elif self.article_retrieval_model == "tfidf":
+        elif article_retrieval_model == "tfidf":
             tfidf_model, tfidf_inverted_index = load_utilities_for_tfidf()
             self.article_model = tfidf_model
             self.inverted_index = tfidf_inverted_index
@@ -38,3 +38,7 @@ class CombinedModel:
 
         # Irgendein Code, um eine gute Answer zurückzugeben
         raise NotImplementedError
+
+
+if __name__ == "__main__":
+    model = CombinedModel("bm", "../data/nq_train_wiki_text.csv")
