@@ -40,7 +40,7 @@ class ContextRetriever:
             return [token.lower() for token in self.nlp(sentence)]
 
     def get_n_top_passages(self, articles: str, question: str):
-        """
+        """ONLY WORK IF THE RETRIEVED DOCUMENTS USE NEWLINES TO SEPARATE PARAGRAPHS.
         :param articles: the joint top n answer relevant articles(str)
         :param question: preoprocessed question(str)
         :return: jointed top n passages from the articles as a final article(str)
@@ -50,6 +50,7 @@ class ContextRetriever:
 
         passages = [passage.strip() for passage in articles.splitlines()] # a list of sentences of the articles
 
+        #print(passages)
         # a list of lists of tokens(a list of sentences)
         documents = [self.tokenize(passage) for passage in passages] # self.tokenize(sent): a list of tokens
 
@@ -57,6 +58,7 @@ class ContextRetriever:
 
         # get top n relevant passages
         best_docs = sorted(range(len(bm25_scores)), key=lambda i: bm25_scores[i])[self.n_passages*(-1):]
+
 
         questionContext = ""
         for fr in best_docs:
@@ -72,13 +74,13 @@ class AnswerExtracter:
         - question answering:  to find the tokens for the answer
     """
 
-    def getAnswer(self, question, questionContext, model="DistilBERT"):
+    def getAnswer(self, question: str, questionContext: str, model="distilbert"):
         ###we’ll need to make all the vectors the same size by padding shorter sentences with the token id 0
 
-        if model == "BERT":
+        if model == "bert":
             model = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
             tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-        else:
+        elif model == "distilbert":
             tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased', return_token_type_ids=True)
             model = DistilBertForQuestionAnswering.from_pretrained('distilbert-base-uncased-distilled-squad')
 
@@ -110,18 +112,19 @@ if __name__ == '__main__':
     nlp = spacy.load('en_core_web_sm')
     nlp.add_pipe(nlp.create_pipe('sentencizer'))
 
-    contextRetriever = ContextRetriever(nlp, 1, preprocess = True)  # top n result of BM25
-
+    # top n result of BM25
+    n_passages = 2
+    contextRetriever = ContextRetriever(nlp, n_passages, preprocess = True)
     questionContext = contextRetriever.get_n_top_passages(articles, question)
 
     answerExtracter = AnswerExtracter()
-    answer = answerExtracter.getAnswer(question, questionContext) # model = ''
-    #print(questionContext)
+    answer = answerExtracter.getAnswer(question, questionContext, model = 'distilbert') # model = ''
 
     print ("Question: ", question)
     print('Text: ', articles)
     print("Question Context: ", questionContext)
 
     print ("Anwser: ", answer)
+
 
 
