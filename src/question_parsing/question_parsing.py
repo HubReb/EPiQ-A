@@ -9,7 +9,7 @@ from functools import partial
 from typing import List, Union
 from nltk.corpus import wordnet
 from nltk.corpus import stopwords
-
+from transformers import BertTokenizer
 
 ##############################################################################
 # Global variables                                                           #

@@ -7,7 +7,7 @@ import pickle
 
 import spacy
 
-from data_utils import read_index
+from article_retrieval.data_utils import read_index
 
 
 def query_processing(query, model, stop_words):

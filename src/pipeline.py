@@ -2,7 +2,10 @@ import pandas as pd
 
 from question_parsing.question_parsing import parse_question
 from article_retrieval.evaluate_baseline import load_utilities_for_bm, load_utilities_for_tfidf
-from answer_extraction.Reader import AnswerExtracter
+from article_retrieval import gensim_bm25
+from article_retrieval.gensim_bm25 import Okapi25
+
+from anwser_extraction.Reader import AnswerExtracter
 
 
 class CombinedModel:
@@ -11,11 +14,17 @@ class CombinedModel:
         self.dataset = pd.read_csv(dataset)
 
         if article_retrieval_model == "bm":
-            bm_model, bm_inverted_index = load_utilities_for_bm()
+            bm_model, bm_inverted_index = load_utilities_for_bm(
+                "article_retrieval/okapibm25.pkl",
+                "/home/rebekka/Studium/master/ITA/project/EPiQ-A/src/article_retrieval/inverted_index.json"
+            )
             self.article_model = bm_model
             self.inverted_index = bm_inverted_index
         elif article_retrieval_model == "tfidf":
-            tfidf_model, tfidf_inverted_index = load_utilities_for_tfidf()
+            tfidf_model, tfidf_inverted_index = load_utilities_for_tfidf(
+                    "article_retrieval/tfidfmodel.pkl",
+                    "/home/rebekka/Studium/master/ITA/project/EPiQ-A/src/article_retrieval/inverted_index.json"
+            )
             self.article_model = tfidf_model
             self.inverted_index = tfidf_inverted_index
         else:
@@ -42,3 +51,4 @@ class CombinedModel:
 
 if __name__ == "__main__":
     model = CombinedModel("bm", "../data/nq_train_wiki_text.csv")
+    model.get_answer("Who is George W. Bush?")

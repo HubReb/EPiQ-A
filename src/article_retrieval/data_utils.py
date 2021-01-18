@@ -5,6 +5,7 @@
 
 import json
 import csv
+import pickle
 import re
 from os.path import isfile
 

@@ -6,7 +6,7 @@ from os.path import join
 
 import pandas as pd
 
-from config import DATAPATH, DATAPATH_PROCESSED
+from article_retrieval.config import DATAPATH, DATAPATH_PROCESSED
 
 
 def split(datapath, result_path):
