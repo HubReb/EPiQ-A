@@ -16,6 +16,13 @@ We use the models of transformers(fine-tuned checkpoints):
 * transformers.DistilBertForQuestionAnswering, or
 * transformers.BertForQuestionAnswering
 
+1. Data Preprocessing
+* To merge the wikipedia articles of the Natural Question train and dev set as the training corpus(so that the BM25 can train on it).
+* Load the merge csv data into a dataframe and add the apreprocess the wikipedia articles to an extra column 'Text_Proc'.
+Run:
+```
+python3 data_preprocessing.py
+```
 
 
 (TODO)
