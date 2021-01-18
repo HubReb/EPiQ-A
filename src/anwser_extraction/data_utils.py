@@ -24,7 +24,3 @@ def merge_train_dev_articles(path1, path2):
 
     # df.to_csv("output.csv", index=False)
     return df
-
-def fix_article_datafram_header(dataframe):
-    dataframe.columns = ["Wikipedia_ID","Text"]
-    return dataframe
