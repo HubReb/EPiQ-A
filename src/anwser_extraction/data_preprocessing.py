@@ -1,7 +1,7 @@
 import spacy
 from tqdm import tqdm
 import pandas as pd
-from data_utils import merge_train_dev_articles, fix_article_datafram_header
+from anwser_extraction.data_utils import merge_train_dev_articles, fix_article_datafram_header
 import re
 import html
 from subprocess import call

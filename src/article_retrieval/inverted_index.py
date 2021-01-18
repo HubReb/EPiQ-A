@@ -8,8 +8,8 @@ from os.path import join
 import pandas as pd
 import spacy
 
-from data_utils import get_article_content, save_index
-from config import DATAPATH_PROCESSED
+from article_retrieval.data_utils import get_article_content, save_index
+from article_retrieval.config import DATAPATH_PROCESSED
 
 
 def create_inverted_index(dataframe, model):

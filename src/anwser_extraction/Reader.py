@@ -1,7 +1,6 @@
 from gensim.summarization.bm25 import BM25
 import torch
 from transformers import DistilBertTokenizer, TFDistilBertForQuestionAnswering
-import tensorflow as tf
 from transformers import DistilBertTokenizer, DistilBertForQuestionAnswering
 import spacy
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering

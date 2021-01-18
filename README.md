@@ -13,6 +13,10 @@ Each pipeline step has its own README that states what pre-existing code/data wa
 
 All requirements are given in requirements.txt
 
+## Installation
+
+First install the requirements, change into the `src` folder  and then run `pip install . --editable` to continue development. Otherwise run `pip install .`
+
 
 ## Project State
 

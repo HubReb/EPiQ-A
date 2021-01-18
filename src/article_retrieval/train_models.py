@@ -6,9 +6,9 @@ import pickle
 from os.path import join
 
 
-from gensim_bm25 import Okapi25
-from tf_idfs import TFIDFmodel
-from config import DATAPATH_PROCESSED
+from article_retrieval.gensim_bm25 import Okapi25
+from article_retrieval.tf_idfs import TFIDFmodel
+from article_retrieval.config import DATAPATH_PROCESSED
 
 
 def train(datapath):
