@@ -7,7 +7,7 @@ import pickle
 from os.path import isfile
 
 from gensim.summarization.bm25 import BM25
-from data_utils import load_corpus
+from article_retrieval.data_utils import load_corpus
 
 
 class Okapi25:
@@ -136,10 +136,10 @@ class Okapi25:
                     "Evaluation setup requires both processed question and evaluate_component flag"
                 )
 
-        if not query_tuple:
+        if evaluate_component:
             query = [" ".join(query)]
         else:
-            query = query["terms"]
+            query = query_tuple["terms"]
         scores = self.model.get_scores(query)
         scores_index_tuples = [(index, score) for index, score in enumerate(scores)]
         ranked_scores = sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)
