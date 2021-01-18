@@ -6,9 +6,10 @@
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 
 
-from data_utils import load_corpus
+from article_retrieval.data_utils import load_corpus
 
 
 class TFIDFmodel:
@@ -68,7 +69,7 @@ class TFIDFmodel:
                 removal
         """
         self.index2key = {}
-        self.index2vector = {}
+        self.index2vector = []
         self.model = model
         self.stop_words = self.model.Defaults.stop_words
         self.vectorizer = None
@@ -90,8 +91,8 @@ class TFIDFmodel:
         self.vectorizer = TfidfVectorizer(min_df=5)  # default for now, fine-tune later
         self.vectorizer = self.vectorizer.fit(content_matrix)
         doc_vecs = self.vectorizer.transform(content_matrix)
-        for index, vector in enumerate(doc_vecs):
-            self.index2vector[index] = vector
+        for vector in doc_vecs:
+            self.index2vector.append(vector/vector.sum(1)[0])
 
     def rank_docs(self, docs, query):
         """
@@ -111,25 +112,48 @@ class TFIDFmodel:
         query_vector = self.vectorizer.transform(query)
         for doc in docs:
             document_vector = self.index2vector[doc]
-            similarities.append((self.index2key[str(doc)], cosine_similarity(query_vector, document_vector)))
+            similarities.append((self.index2key[str(doc)], cosine_similarity(query_vector/query_vector.sum(), document_vector)))
         ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
         ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
         return ranked_docs
 
-    def rank(self, query):
+    def rank(self, query_tuple=None, query=None, evaluate_component=False):
         """Rank all documents to query with cosine similarity of tf-idf values
 
         Arguments:
-            query - processed query that must be lemmatized, tokenized and have had
-                stop words removed
+            query_tuple (default: None) - namedTuple of Question as defined by
+                question_parsing component, cannot be combined with query or
+                evaluate_component flag
+            query (default: None) - processed query that must be lemmatized,
+                 tokenized and have had stop words removed, must be set with
+                 evaluate_component
+            evaluate_component (default: False) - boolean value determining if
+                the evaluation setup is executed
 
         Returns:
             ranked list of wikipedia article identifiers corresponding to the indices
             of all documents in the dataset
-        """
+        Raises:
+            TypeError if both query_tuple and query or evaluate_component are given
+            TypeError if neither query_tuple nor query and evaluate_component are given
 
+        """
+        if query_tuple:
+            if query or evaluate_component:
+                raise TypeError(
+                    "namedTuple Question is mutuably exlusive with evaluation_component"
+                    "flag and processed query string!"
+                )
+        else:
+            if not (query and evaluate_component):
+                raise TypeError(
+                    "Evaluation setup requires both processed question and evaluate_component flag"
+                )
         similarities = []
-        query = [" ".join(query)]
+        if not query_tuple:
+            query = [" ".join(query)]
+        else:
+            query = query["terms"]
         query_vector = self.vectorizer.transform(query)
         for index, doc in self.index2vector.items():
             similarities.append((self.index2key[str(index)], cosine_similarity(query_vector, doc)))
