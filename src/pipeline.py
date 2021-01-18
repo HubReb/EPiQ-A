@@ -38,7 +38,7 @@ class CombinedModel:
         ranked_ids = self.article_model.rank(parsed_query)
 
         # get text from ids
-        top_paragraphs = self.dataset["WikipediaID"].loc[ranked_ids]
+        top_paragraphs = self.dataset[self.dataset["Wikipedia_ID"].isin(ranked_ids)]["Text"]
 
         possible_ansers = []
         for context in top_paragraphs:

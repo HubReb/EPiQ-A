@@ -139,7 +139,7 @@ class Okapi25:
         if evaluate_component:
             query = [" ".join(query)]
         else:
-            query = query_tuple["terms"]
+            query = query_tuple.terms
         scores = self.model.get_scores(query)
         scores_index_tuples = [(index, score) for index, score in enumerate(scores)]
         ranked_scores = sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)

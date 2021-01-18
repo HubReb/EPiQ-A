@@ -153,7 +153,7 @@ class TFIDFmodel:
         if not query_tuple:
             query = [" ".join(query)]
         else:
-            query = query_tuple["terms"]
+            query = query_tuple.terms
         query_vector = self.vectorizer.transform(query)
         for index, doc in self.index2vector.items():
             similarities.append((self.index2key[str(index)], cosine_similarity(query_vector, doc)))
