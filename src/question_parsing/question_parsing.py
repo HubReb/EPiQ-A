@@ -9,7 +9,6 @@ from functools import partial
 from typing import List, Union
 from nltk.corpus import wordnet
 from nltk.corpus import stopwords
-from transformers import BertTokenizer
 
 ##############################################################################
 # Global variables                                                           #
@@ -356,7 +355,6 @@ def parse_question(
 
     return Question(
         terms=postprocessor(spacy_question),
-        bert_tokens=BertTokenizer.token,
         pos_tags=None,
         synonyms=postprocessor(
             get_synonyms(spacy_question, synonym_method, max_synonyms)
