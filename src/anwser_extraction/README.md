@@ -9,12 +9,12 @@ We use Okapi BM25 ([gensim.summarization.bm25](https://radimrehurek.com/gensim_3
 
 1. Data Preprocessing
 * To merge the wikipedia articles of the Natural Question train AND dev set as the training corpus(so that the BM25 can train on it).
-* Load the merge csv data into a dataframe and add the preprocess the wikipedia articles to an extra column 'Text_Proc'.
+* Load the merge csv data into one dataframe and add the preprocess the wikipedia articles.
 <br>Run:
 ```
 python3 data_preprocessing.py
 ```
-The preprocessed corpus will be saved in ./data/processed_article_corpus.csv with 2 columns: 'Wikipedia_ID','Text_Proc'
+The preprocessed corpus will be saved in ./data/processed_article_corpus.csv with 2 columns: 'Wikipedia_ID','Text_Proc(preprocessed articles)
 
 2. Train the BM25 model <br>
 * Train the model on the tprocessed_article_corpus.csv (on paragraphs level)
