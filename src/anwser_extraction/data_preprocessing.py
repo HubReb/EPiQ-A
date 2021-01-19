@@ -1,19 +1,16 @@
 import spacy
 from tqdm import tqdm
-import pandas as pd
-from anwser_extraction.data_utils import merge_train_dev_articles, fix_article_datafram_header
+from data_utils import merge_train_dev_articles
 import re
 import html
 from subprocess import call
-
-
 
 # Preprocess Text(articles) in dataframe
 class Data():
     def __init__(self, dataframe, model='en_core_web_sm'):
         # catch error if spaCy model is not available, installs it and restarts the script
         self.df = dataframe
-        self.fp = f'./corpus_processed'
+        self.fp = f'./data/processed_article_corpus.csv'
 
         try:
             self.nlp = spacy.load(model)
@@ -95,8 +92,8 @@ class Data():
         """
         tqdm.pandas(desc='Processing data', ncols=100)
 
-
-        print(self.df)
+        # print(self.df.columns.values)
+        # print(self.df)
         if lowercase:
             self.df['Text_Proc'] = self.df['Text'].str.lower()
 
@@ -109,21 +106,27 @@ class Data():
         self.df['Text_Proc'] = self.df['Text_Proc'].progress_apply(self.remove_multiple_whitespaces)
 
 
+
+
     def main(self):
         """Preprocessing and saving processed .csv table
         """
         self.preprocess(lowercase=True)
-        self.df.to_csv(self.fp, sep='\t', encoding='utf-8', index=False)
+        # Only sace column 'Wikipedia_ID' and 'Text_Proc'
+        selected_dataframe = self.df.filter(['Wikipedia_ID', 'Text_Proc'])
+        selected_dataframe.to_csv(self.fp, encoding='utf-8', index=False)
         print(f'\nData frame written to {self.fp}')
 
 
-
-
 if __name__ == '__main__':
-    train_wiki_text_file = "./data/nq_train_wiki_text_short.csv"
-    dev_wiki_text_file = "./data/nq_dev_wiki_text_short.csv"
+    # Local
+    # train_wiki_text_file = "./data/nq_train_wiki_text_short.csv"
+    # dev_wiki_text_file = "./data/nq_dev_wiki_text_short.csv"
+    # In last:
+    train_wiki_text_file = "/proj/mahoni/project/data/nq_train_wiki_text.csv"
+    dev_wiki_text_file = "/proj/mahoni/project/data/nq_dev_wiki_text.csv"
+
     train_articles_df = merge_train_dev_articles(train_wiki_text_file, dev_wiki_text_file)
-    #train_articles_df =fix_article_datafram_header(train_articles_df)
 
     preprocess_corpus = Data(train_articles_df)
     preprocess_corpus.main()
