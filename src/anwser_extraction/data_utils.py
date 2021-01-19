@@ -7,7 +7,7 @@ def load_csv(path: str):
     :param path: path of the csv file
     :return dataframe:
     '''
-    df = pd.read_csv(path, engine='python', error_bad_lines=False)  # , delimiter='\t', encoding="utf8", engine='python', error_bad_lines=False
+    df = pd.read_csv(path)  # , engine='python', error_bad_lines=False , delimiter='\t', encoding="utf8", engine='python', error_bad_lines=False
     return df
 
 
