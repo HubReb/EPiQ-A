@@ -7,6 +7,24 @@ There are 2 main tasks to extract accurate answers to preoprocessed questions in
 ### Extract the relevant paragraphs
 We use Okapi BM25 ([gensim.summarization.bm25](https://radimrehurek.com/gensim_3.8.3/summarization/bm25.html))
 
+1. Data Preprocessing
+* To merge the wikipedia articles of the Natural Question train AND dev set as the training corpus(so that the BM25 can train on it).
+* Load the merge csv data into a dataframe and add the preprocess the wikipedia articles to an extra column 'Text_Proc'.
+<br>Run:
+```
+python3 data_preprocessing.py
+```
+The preprocessed corpus will be saved in ./data/processed_article_corpus.csv with 2 columns: 'Wikipedia_ID','Text_Proc'
+
+2. Train the BM25 model <br>
+* Train the model on the tprocessed_article_corpus.csv (on paragraphs level)
+<br>Run:
+```
+python3 train_BM25.py
+```
+The trained BM25 model (will be) is saved in trained_bm25.pkl
+
+
 ### Extract the extact answer span
 We use 2 pre-trained models from transformers will tokenize the paragraph:
 * distilbert-base-uncased-squad2, or
@@ -16,14 +34,14 @@ We use the models of transformers(fine-tuned checkpoints):
 * transformers.DistilBertForQuestionAnswering, or
 * transformers.BertForQuestionAnswering
 
-1. Data Preprocessing
-* To merge the wikipedia articles of the Natural Question train and dev set as the training corpus(so that the BM25 can train on it).
-* Load the merge csv data into a dataframe and add the apreprocess the wikipedia articles to an extra column 'Text_Proc'.
-<br>Run:
-```
-python3 data_preprocessing.py
-```
 
 
-(TODO)
-This model can answer "yes/no questions" with a sentence instead of "yes/no" answers, thus we might also solve this problem.
+
+TODO:
+* Combinate the Reader and trained BM25 model
+* Evaluation
+* (maybe)This model can answer "yes/no questions" with a sentence instead of "yes/no" answers, thus we might also solve this problem.
+
+Idea:
+* Evaluation: Macro-averaged F1 score im SQuAD / Jaccard-Index on Token-Overlap
+* plus one long answer from BM25 on sentence level?
