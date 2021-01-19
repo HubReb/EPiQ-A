@@ -23,12 +23,10 @@ class Okapi_BM_25:
     def fit(self, csv_path):
         """Fit gensim's BM25 model to data."""
         # articles: str
-
         dataframe = load_csv(csv_path)
-        # print(dataframe.columns.values)
-        # print(dataframe.Text_Proc.values)
+
         processed_articles = ''
-        # loop throu numpy array
+        # loop through numpy array
         for articles in dataframe.Text_Proc.values:
             processed_articles = articles + '\n' # a big string
 
@@ -46,4 +44,5 @@ def train(datapath):
 
 if __name__ == "__main__":
 
-    train('corpus_processed.csv')
+    train('./data/corpus_processed.csv')
+    #train('./data/corpus_processed.csv')
