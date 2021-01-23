@@ -17,7 +17,7 @@ def query_processing(query, model, stop_words):
     return [word.lemma_ for word in processed_query]
 
 
-def query_index(query, inverted_index, model):
+def query_index(query, inverted_index, model, processing=False):
     """
     Retrieve doc indices relevant to query from inverted index
 
@@ -28,15 +28,17 @@ def query_index(query, inverted_index, model):
     Arguments:
         query - query to retrieve documents for
         inverted_index - dictionary from words to the document indices that contain them
+        processing - boolean to determine if preprocessing is necessary
 
     Returns:
         best_doc_guesses - indices of documents that contain words of the query
         query - processed query
         model - spacy model for lemmatization and stop word list
     """
-    stop_words = model.Defaults.stop_words
+    stop_words = model.stop_words
     document_ids = defaultdict(list)
-    query = query_processing(query, model, stop_words)
+    if processing:
+        query = query_processing(query, model, stop_words)
     for word in query:
         if word in inverted_index.keys():
             document_ids[word].extend(inverted_index[word])
@@ -61,6 +63,7 @@ if __name__ == "__main__":
     print(
         tfidf_model.rank_docs(
             docs,
-            query
+            query,
+            processing=True
         )
     )

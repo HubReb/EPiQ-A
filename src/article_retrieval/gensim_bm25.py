@@ -6,6 +6,8 @@
 import pickle
 from os.path import isfile
 
+import spacy
+
 from gensim.summarization.bm25 import BM25
 from article_retrieval.data_utils import load_corpus
 
@@ -50,21 +52,35 @@ class Okapi25:
 
             dataframe_filename - name of the csv file the dataset is stored in
 
-        rank(self, query):
+        rank(self, query_tuple, query, evaluate_component):
             Rank all documents in self.models.doc_freqs against a query.
 
-            query - processed query
+            query_tuple (default: None)- named tuple of type Question
+            query  (default: None)- processed query
+            evaluate_component (default: False)- boolean to determine if we are
+                only evaluating the retrieval component
+
             Returns:
             ranked list of wikipedia article identifiers
 
-        rank_docs(self, query, docs):
+            Raises:
+                TypeError if both query_tuple and query or evaluate_component are given
+                TypeError if neither query_tuple nor query and evaluate_component are given
+
+        rank_docs(self, query, docs, evaluate_component):
             Rank a subset of the docs in self.doc_freqs against a query.
 
-            query - processed query
+            query - processed query or named tuple of type Questio
             docs - indices of documents to calculate score for
+            evaluate_component (default: False) - boolean to determine if we are
+                only evaluating the retrieval component
+
             Returns:
                 ranked list of wikipedia article identifiers
-    """
+
+            Raises:
+            TypeError if query is tuple and evaluate_component is True
+        """
 
     def __init__(self, k=1.5, b=0.75, epsilon=0.25, filename="okapibm25.pkl"):
         """
@@ -84,6 +100,7 @@ class Okapi25:
         self.b = b
         self.epsilon = epsilon
         self.index2wikiid = {}
+        self.stop_words = spacy.load('en_core_web_sm').Defaults.stop_words
         if isfile(filename):
             self.model = self.load(filename)
 
@@ -137,7 +154,7 @@ class Okapi25:
                 )
 
         if evaluate_component:
-            query = [" ".join(query)]
+            query = " ".join(query)
         else:
             query = query_tuple.terms
         scores = self.model.get_scores(query)
@@ -145,7 +162,7 @@ class Okapi25:
         ranked_scores = sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)
         return [self.index2wikiid[str(score_tuple[0])] for score_tuple in ranked_scores]
 
-    def rank_docs(self, query, docs):
+    def rank_docs(self, query, docs, evaluate_component=False):
         """
         Rank a subset of the docs in self.doc_freqs against a query.
 
@@ -157,15 +174,27 @@ class Okapi25:
 
 
         Arguments:
-            query - processed query
+            query - processed query, either a tokenized list or a named tuple (Question)
             docs - indices of documents to calculate score for
+            evaluate_component (default: False) - boolean to determine which query format is given
 
         Returns:
             A list of wikipedia article identifiers, sorted in decreasing
             similarity.
+
+        Raises:
+            TypeError if query is tuple and evaluate_component is True
         """
 
-        query = " ".join(query)
-        scores_index_tuples = [(index, self.model.get_score(query, docs[index])) for index in docs]
+        if evaluate_component and not isinstance(query, list):
+            raise TypeError(
+                "namedTuple Question is mutuably exlusive with evaluation_component"
+                "flag and processed query string!"
+            )
+        if evaluate_component:
+            query = " ".join(query)
+        else:
+            query = " ".join(query.terms)
+        scores_index_tuples = [(index, self.model.get_score(query, index)) for index in docs]
         ranked_scores = sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)
         return [self.index2wikiid[str(score_tuple[0])] for score_tuple in ranked_scores]

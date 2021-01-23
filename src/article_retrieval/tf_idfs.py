@@ -5,7 +5,7 @@
 
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn import preprocessing
 import numpy as np
 
 
@@ -42,24 +42,38 @@ class TFIDFmodel:
 
             dataframe_filename - The name of the file the dataset is stored in.
 
-        rank_docs(self, query, docs):
+        rank_docs(self, query, docs, evaluate_component):
             Rank select documents to query with with cosine similarity of tf-idf values.
 
-            docs - list of indices in dataset
-            query - processed query that must be lemmatized, tokenized and have had
-                stop words removed
+            Arguments:
+                query - processed query that must be lemmatized, tokenized and have had
+                    stop words removed or a named tuple of type Question
+                docs - list of indices in dataset
+                evaluate_component (default: False) - boolean value determining if
+                    the evaluation setup is executed
+            Returns:
+                ranked list of wikipedia article identifiers corresponding to the indices
+                given by docs
+            Raises:
+                TypeError if query is tuple and evaluate_component is True
+
+        rank(self, query_tuple, query, evaluate_component):
+            Arguments:
+                query_tuple (default: None) - namedTuple of Question as defined by
+                    question_parsing component, cannot be combined with query or
+                    evaluate_component flag
+                query (default: None) - processed query that must be lemmatized,
+                     tokenized and have had stop words removed, must be set with
+                     evaluate_component
+                evaluate_component (default: False) - boolean value determining if
+                    the evaluation setup is executed
 
             Returns:
-                 ranked list of wikipedia article identifiers
-
-        rank(self, query):
-            Rank all documents to query with cosine similarity of tf-idf values
-
-            query - processed query that must be lemmatized, tokenized and have had
-                stop words removed
-
-            Returns:
-                ranked list of wikipedia article identifiers
+                ranked list of wikipedia article identifiers corresponding to the indices
+                of all documents in the dataset
+            Raises:
+                TypeError if both query_tuple and query or evaluate_component are given
+                TypeError if neither query_tuple nor query and evaluate_component are given
     """
 
     def __init__(self, model=spacy.load("en_core_web_sm")):
@@ -92,27 +106,38 @@ class TFIDFmodel:
         self.vectorizer = self.vectorizer.fit(content_matrix)
         doc_vecs = self.vectorizer.transform(content_matrix)
         for vector in doc_vecs:
-            self.index2vector.append(vector/vector.sum(1)[0])
+            self.index2vector.append(preprocessing.normalize(vector))
 
-    def rank_docs(self, docs, query):
+    def rank_docs(self, docs, query, evaluate_component=False):
         """
         Rank select documents to query with with cosine similarity of tf-idf values.
 
         Arguments:
             query - processed query that must be lemmatized, tokenized and have had
-                stop words removed
+                stop words removed or a named tuple of type Question
             docs - list of indices in dataset
-
+            evaluate_component (default: False) - boolean value determining if
+                the evaluation setup is executed
         Returns:
             ranked list of wikipedia article identifiers corresponding to the indices
             given by docs
+        Raises:
+            TypeError if query is tuple and evaluate_component is True
         """
+        if evaluate_component and not isinstance(query, list):
+            raise TypeError(
+                "namedTuple Question is mutuably exlusive with evaluation_component"
+                "flag and processed query string!"
+            )
         similarities = []
-        query = [" ".join(query)]
-        query_vector = self.vectorizer.transform(query)
+        if evaluate_component:
+            query = [" ".join(query)]
+        else:
+            query = " ".join(query.terms)
+        query_vector = preprocessing.normalize(self.vectorizer.transform(query)).todense()
         for doc in docs:
             document_vector = self.index2vector[doc]
-            similarities.append((self.index2key[str(doc)], cosine_similarity(query_vector/query_vector.sum(), document_vector)))
+            similarities.append((self.index2key[str(doc)], np.dot(query_vector, document_vector.todense().T)))
         ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
         ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
         return ranked_docs
@@ -136,7 +161,6 @@ class TFIDFmodel:
         Raises:
             TypeError if both query_tuple and query or evaluate_component are given
             TypeError if neither query_tuple nor query and evaluate_component are given
-
         """
         if query_tuple:
             if query or evaluate_component:
@@ -154,9 +178,10 @@ class TFIDFmodel:
             query = [" ".join(query)]
         else:
             query = query_tuple.terms
-        query_vector = self.vectorizer.transform(query)
-        for index, doc in self.index2vector.items():
-            similarities.append((self.index2key[str(index)], cosine_similarity(query_vector, doc)))
+        query_vector = preprocessing.normalize(self.vectorizer.transform(query)).todense()
+        for index, doc in enumerate(self.index2vector):
+            # handle sparse vectors correctly
+            similarities.append((self.index2key[str(index)], np.dot(query_vector, doc.todense().T)))
         ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
         ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
         return ranked_docs
