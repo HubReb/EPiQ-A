@@ -4,6 +4,7 @@ from question_parsing.question_parsing import parse_question
 from article_retrieval.evaluate_baseline import load_utilities_for_bm, load_utilities_for_tfidf
 from article_retrieval import gensim_bm25
 from article_retrieval.gensim_bm25 import Okapi25
+from article_retrieval.query_index import query_index
 
 from anwser_extraction.Reader import AnswerExtracter
 
@@ -35,7 +36,8 @@ class CombinedModel:
 
     def get_answer(self, query: str):
         parsed_query = self.question_parser(question=query)
-        ranked_ids = self.article_model.rank(parsed_query)
+        docs, _ = query_index(parsed_query.terms, self.inverted_index, self.article_model)
+        ranked_ids = self.article_model.rank_docs(parsed_query, docs)
 
         # get text from ids
         top_paragraphs = self.dataset[self.dataset["Wikipedia_ID"].isin(ranked_ids)]["Text"]
