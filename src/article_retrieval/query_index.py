@@ -17,7 +17,7 @@ def query_processing(query, model, stop_words):
     return [word.lemma_ for word in processed_query]
 
 
-def query_index(query, inverted_index, model, processing=False):
+def query_index(query, inverted_index, model, processing=False, must_have=None):
     """
     Retrieve doc indices relevant to query from inverted index
 
@@ -29,6 +29,7 @@ def query_index(query, inverted_index, model, processing=False):
         query - query to retrieve documents for
         inverted_index - dictionary from words to the document indices that contain them
         processing - boolean to determine if preprocessing is necessary
+        must_have - list of terms that must be present in the document to be drawn from index
 
     Returns:
         best_doc_guesses - indices of documents that contain words of the query
@@ -39,6 +40,8 @@ def query_index(query, inverted_index, model, processing=False):
     document_ids = defaultdict(list)
     if processing:
         query = query_processing(query, model, stop_words)
+    if must_have:
+        query = must_have[:]
     for word in query:
         if word in inverted_index.keys():
             document_ids[word].extend(inverted_index[word])
