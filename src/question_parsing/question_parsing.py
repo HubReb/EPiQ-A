@@ -20,8 +20,6 @@ QuestionFields = [
     #                              -> combat sparsity!
     "pos_tags",  # POS tags of relevant tokens
     "named_entities",  # Named Entities in question
-    "question_type",  # Question type according to fine-grained taxonomy
-    # from Li and Rother (2002)
     "focus"  # Main keyword in question, has large influence on
     # the expected answer
 ]
@@ -206,6 +204,26 @@ def get_lemmas_from_wordnet_synset(synset):
     return all_lemmata
 
 
+def get_hypernym_closure(synset):
+    """
+    Extracts all (transitive) hypernyms of a given synset as str.
+    """
+    all_hypernyms = []
+    for hypernym in synset.closure(lambda s: s.hypernyms()):
+        all_hypernyms.extend(get_lemmas_from_wordnet_synset(hypernym))
+    return all_hypernyms
+
+
+def get_hyponym_closure(synset):
+    """
+    Extracts all (transitive) hyponyms of a given synset as str.
+    """
+    all_hyponyms = []
+    for hyponym in synset.closure(lambda s: s.hyponyms()):
+        all_hyponyms.extend(get_lemmas_from_wordnet_synset(hyponym))
+    return all_hyponyms
+
+
 def find_root(question: SpacyQuestion) -> Token:
     """
     Finds the root element of the question's dependency parse.
@@ -219,7 +237,8 @@ def get_noun_chunk(token: Token, question: SpacyQuestion) -> List[str]:
     accepted_pos = ["NUM", "NOUN", "PROPN", "ADJ"]
     for noun_chunk in question.noun_chunks:
         if token in noun_chunk:
-            return [str(tken) for tken in noun_chunk if tken.pos_ in accepted_pos]
+            return [str(tken) for tken in noun_chunk
+                    if tken.pos_ in accepted_pos]
 
     return [str(token)]
 
@@ -229,19 +248,25 @@ def get_noun_chunk(token: Token, question: SpacyQuestion) -> List[str]:
 ##############################################################################
 
 
-def get_wordnet_synonyms(term: str, pos: str, max_synonyms: int) -> List[str]:
+def get_wordnet_synonyms(term: str, pos: str, max_synonyms: int,
+                         include_hypernyms: bool = False,
+                         include_hyponyms: bool = False) -> List[str]:
     """
     Returns all Lemmas from all WordNet synsets of `term`.
     """
     all_synsets = wordnet.synsets(term, pos=pos)
     all_synonyms = []
-    # TODO: Hyponyms/Hypernyms?
+    
     for synset in all_synsets:
         all_synonyms.extend(get_lemmas_from_wordnet_synset(synset))
-
-    # TODO: Smarter selection
-    random.shuffle(all_synonyms)
-    return all_synonyms[: min(max_synonyms, len(all_synonyms))]
+        
+        if include_hypernyms:
+            all_synonyms.extend(get_hypernym_closure(synset))
+        
+        if include_hyponyms:
+            all_synonyms.extend(get_hyponym_closure(synset))
+    
+    return all_synonyms[:min(max_synonyms, len(all_synonyms))]
 
 
 def get_word2vec_synonyms(term: str, pos: str, max_synonyms: int) -> List[str]:
@@ -257,7 +282,8 @@ def get_word2vec_synonyms(term: str, pos: str, max_synonyms: int) -> List[str]:
 
 
 def get_synonyms(
-    question: SpacyQuestion, method: str = None, max_synonyms: int = 10
+    question: SpacyQuestion, method: str = None, max_synonyms: int = 10,
+    include_hypernyms: bool = False, include_hyponyms: bool = False
 ) -> List[str]:
     """
     Depending on `method`, invokes the correct synonym retrieval
@@ -265,26 +291,47 @@ def get_synonyms(
     """
     if method == "word2vec":
         synonym_getter = get_word2vec_synonyms
-    else:
-        synonym_getter = get_wordnet_synonyms
+    elif method == "wordnet":
+        synonym_getter = partial(get_wordnet_synonyms,
+                                 include_hypernyms = include_hypernyms,
+                                 include_hyponyms = include_hyponyms)
 
     all_synonyms = []
     for token in question:
         pos = convert_spacy_pos_to_nltk(token.pos_)
         if str(token) not in Stopwords:  # Ignore stopwords
             synonyms = synonym_getter(str(token), pos, max_synonyms)
+            synonyms = [synonym.lower() for synonym in synonyms]
             all_synonyms.extend(synonyms)
+    
+    question_tokens = set([str(token) for token in question
+                           if token not in Stopwords and \
+                           token in EmbeddingModel])
+    all_synonyms = list(set([synonym for synonym in all_synonyms
+                             if synonym not in question_tokens and \
+                             synonym not in Stopwords]))
+    
+    if len(all_synonyms) == 0:
+        return all_synonyms
+    
+    # Sort by embeddings space similarity
+    random.shuffle(all_synonyms)
+    if max_synonyms < len(all_synonyms) and question_tokens:
+        synonyms_in_embedding_model = [synonym for synonym in all_synonyms
+                                       if synonym in EmbeddingModel]
+        synonyms_notin_embedding_model = [synonym for synonym in all_synonyms
+                                          if synonym not in EmbeddingModel]
+        distances = [EmbeddingModel.n_similarity(question_tokens, [synonym])
+                     for synonym in synonyms_in_embedding_model]
+        _, sorted_synonyms = \
+            zip(*sorted(zip(distances, synonyms_in_embedding_model)))
+        all_synonyms = list(sorted_synonyms) + synonyms_notin_embedding_model
 
-    return list(set(all_synonyms))
+    return list(set(all_synonyms))[:min(max_synonyms, len(all_synonyms))]
 
 
 def get_named_entities(question: SpacyQuestion) -> List[str]:
     return [str(ent).lower() for ent in question.ents]
-
-
-def get_question_type() -> str:
-    # TODO
-    return None
 
 
 def get_focus(question: SpacyQuestion) -> str:
@@ -333,13 +380,14 @@ def get_focus(question: SpacyQuestion) -> str:
 
 def parse_question(
     question: str,
-    max_synonyms=10,
-    synonym_method="word2vec",
-    lemmatise=False,
-    stem=False,
-    tolower=False,
-    filter_stopwords=False,
-    pretrained_tokenizer="DistilBERT"
+    max_synonyms: int = 10,
+    synonym_method: str = "wordnet",
+    include_hyponyms: bool = False,
+    include_hypernyms: bool = False,
+    lemmatise: bool = False,
+    stem: bool = False,
+    tolower: bool = False,
+    filter_stopwords: bool = False
 ) -> Question:
     """
     Main method for parsing a question.
@@ -357,10 +405,10 @@ def parse_question(
         terms=postprocessor(spacy_question),
         pos_tags=None,
         synonyms=postprocessor(
-            get_synonyms(spacy_question, synonym_method, max_synonyms)
+            get_synonyms(spacy_question, synonym_method, max_synonyms,
+                         include_hyponyms, include_hypernyms)
         ),
         named_entities=postprocessor(get_named_entities(spacy_question)),
-        question_type=get_question_type(),
         focus=get_focus(spacy_question),
     )
 
@@ -369,8 +417,8 @@ if __name__ == "__main__":
     with open("test_questions.txt") as tf:
         for line in tf:
             question = line.strip()
-            parse = parse_question(question)
+            parse = parse_question(question, include_hyponyms=True, include_hypernyms=True)
 
             print(question)
-            print(parse.focus)
+            print(parse.synonyms)
             print()
