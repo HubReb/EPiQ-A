@@ -138,7 +138,7 @@ class TFIDFmodel:
         query_vector = preprocessing.normalize(self.vectorizer.transform(query))
         for doc in docs:
             document_vector = self.index2vector[doc]
-            similarities.append((self.index2key[str(doc)], safe_sparse_dot(query_vector, document_vector.T)))
+            similarities.append((self.index2key[str(doc)], safe_sparse_dot(query_vector, document_vector.T)[0][0]))
         ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
         ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
         return ranked_docs
@@ -182,7 +182,7 @@ class TFIDFmodel:
         query_vector = preprocessing.normalize(self.vectorizer.transform(query))
         for index, doc in enumerate(self.index2vector):
             # handle sparse vectors correctly
-            similarities.append((self.index2key[str(index)], safe_sparse_dot(query_vector, doc.T)))
+            similarities.append((self.index2key[str(index)], safe_sparse_dot(query_vector, doc.T, dense_output=True)[0][0]))
         ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
         ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
         return ranked_docs
