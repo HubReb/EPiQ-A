@@ -35,14 +35,22 @@ def query_index(query, inverted_index, model, processing=False, must_have=None):
         best_doc_guesses - indices of documents that contain words of the query
         query - processed query
         model - spacy model for lemmatization and stop word list
+
+    Raises:
+        ValueError if must_have is specifed but an empty list
     """
     stop_words = model.stop_words
     document_ids = defaultdict(list)
     if processing:
         query = query_processing(query, model, stop_words)
     if must_have:
-        query = must_have[:]
+        if must_have == []:
+            raise ValueError(
+                    "We cannot query the index with an empty list!"
+            )
     for word in query:
+        if must_have and word not in must_have:
+            continue
         if word in inverted_index.keys():
             document_ids[word].extend(inverted_index[word])
     docs_to_query_words_counter = defaultdict(int)
