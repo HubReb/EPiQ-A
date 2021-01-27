@@ -42,7 +42,7 @@ def query_index(query, inverted_index, model, processing=False, must_have=None):
     stop_words = model.stop_words
     document_ids = defaultdict(list)
     if processing:
-        query = query_processing(query, model, stop_words)
+        query = query_processing(query, spacy.load('en_core_web_sm'), stop_words)
     if must_have:
         if must_have == []:
             raise ValueError(
@@ -65,16 +65,14 @@ def query_index(query, inverted_index, model, processing=False, must_have=None):
 
 
 if __name__ == "__main__":
-    model = spacy.load('en_core_web_sm')
-    print("loaded spacy")
     index = read_index("inverted_index.json")
     with open("tfidfmodel.pkl", "rb") as f:
         tfidf_model = pickle.load(f)
-    docs, query = query_index("Who was George Bush?", index, model)
+    docs, query = query_index("Who was George Bush?", index, tfidf_model, processing=True)
     print(
         tfidf_model.rank_docs(
             docs,
             query,
-            processing=True
+            evaluate_component=True
         )
     )
