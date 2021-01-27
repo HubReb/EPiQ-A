@@ -47,21 +47,17 @@ def process_corpus(dataframe_filename, model):
     wiki_ids = dataframe["Wikipedia_ID"].values
     processed_corpus = []
     dataframe = []      # free memory
-    corpus_length = len(corpus)
     counter = 0
     index2wikiid = {}
     for document, wiki_id in zip(corpus, wiki_ids):
         index2wikiid[counter] = wiki_id
         counter += 1
-        document = " ".join(get_article_content(document, model, stop_words))
-        processed_corpus.append(document)
-        if counter % 10 == 0:
-            print(counter/corpus_length)
-            break
+        processed_corpus.append(get_article_content(document, model, stop_words))
     # adapted from https://stackoverflow.com/questions/30711899/python-how-to-write-list-of-lists-to-file
     with open(f"{dataframe_filename.split('.csv')[0]}_lemmatized_stop_words_removed.csv", "w") as f:
         wr = csv.writer(f)
-        wr.writerows(processed_corpus)
+        for line in processed_corpus:
+            wr.writerow(line)
     save_index(index2wikiid, f"{dataframe_filename.split('.csv')[0]}_index2key.json")
     return processed_corpus, index2wikiid
 
@@ -92,7 +88,7 @@ def load_corpus(filename):
         with open(f"{split_filename}_lemmatized_stop_words_removed.csv") as csvfile:
             docreader = csv.reader(csvfile)
             for row in docreader:
-                documents.append("".join(row))
+                documents.append(" ".join(row))
         index2key = read_index(f"{split_filename}_index2key.json")
     else:
         model = spacy.load('en_core_web_sm')
