@@ -4,7 +4,7 @@ import sys
 import json
 
 from typing import List, Set, Dict
-from question_parsing import Question, parse_question
+from question_parsing.question_parsing import Question, parse_question
 
 
 def tokenize(tokens: str) -> List[str]:
@@ -76,8 +76,8 @@ class ArticlesFromTitleMentions:
 
 
 if __name__ == '__main__':
-    article_getter = ArticlesFromTitleMentions('nq_dev_train_wiki_text.csv')
-    with open("test_questions.txt") as tf:
+    article_getter = ArticlesFromTitleMentions('../../data/article_retrieval/nq_dev_train_wiki_text.csv')
+    with open("../question_parsing/test_questions.txt") as tf:
         for line in tf:
             question = line.strip()
             parse = parse_question(question, include_hyponyms=True, include_hypernyms=True)
