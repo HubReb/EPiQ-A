@@ -15,13 +15,15 @@ from nltk.corpus import stopwords
 ##############################################################################
 
 QuestionFields = [
-    "terms",  # Relevant tokens of the question
-    "synonyms",  # Synonyms to relevant tokens (for term augmentation)
-    #                              -> combat sparsity!
-    "pos_tags",  # POS tags of relevant tokens
-    "named_entities",  # Named Entities in question
-    "focus"  # Main keyword in question, has large influence on
-    # the expected answer
+    "terms",             # Relevant tokens of the question
+    "original_terms",    # The original terms (including stopwords)
+                         # no preprocessing
+    "synonyms",          # Synonyms to relevant tokens (for term augmentation)
+                         # -> combat sparsity!
+    "pos_tags",          # POS tags of relevant tokens
+    "named_entities",    # Named Entities in question
+    "focus"              # Main keyword in question, has large influence on
+                         # the expected answer
 ]
 Question = namedtuple("Question", QuestionFields)  # Datastructure to store
 # questions
@@ -333,6 +335,9 @@ def get_synonyms(
 def get_named_entities(question: SpacyQuestion) -> List[str]:
     return [str(ent).lower() for ent in question.ents]
 
+def get_pos_tags(question: SpacyQuestion) -> List[str]:
+    return [str(token.pos_) for token in question]
+
 
 def get_focus(question: SpacyQuestion) -> str:
     root = find_root(question)
@@ -344,7 +349,7 @@ def get_focus(question: SpacyQuestion) -> str:
     # 1st rule: Try to find nsubj or dobj
     for token in root.children:
         # Exclude question words:
-        if str(token) in QuestionWords:
+        if str(token).lower() in QuestionWords:
             continue
 
         elif token.pos_ == "PRON":
@@ -403,7 +408,8 @@ def parse_question(
 
     return Question(
         terms=postprocessor(spacy_question),
-        pos_tags=None,
+        original_terms = [str(token).lower() for token in spacy_question],
+        pos_tags=get_pos_tags(spacy_question),
         synonyms=postprocessor(
             get_synonyms(spacy_question, synonym_method, max_synonyms,
                          include_hyponyms, include_hypernyms)
