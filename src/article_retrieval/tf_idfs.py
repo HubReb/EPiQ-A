@@ -107,7 +107,7 @@ class TFIDFmodel:
         self.vectorizer = self.vectorizer.fit(content_matrix)
         doc_vecs = self.vectorizer.transform(content_matrix)
         for vector in doc_vecs:
-            self.index2vector.append(preprocessing.normalize(vector))
+            self.index2vector.append(vector)
 
     def rank_docs(self, docs, query, evaluate_component=False):
         """
@@ -135,7 +135,7 @@ class TFIDFmodel:
             query = [" ".join(query)]
         else:
             query = " ".join(query.terms)
-        query_vector = preprocessing.normalize(self.vectorizer.transform(query))
+        query_vector = self.vectorizer.transform(query)
         for doc in docs:
             document_vector = self.index2vector[doc]
             similarities.append((self.index2key[str(doc)], safe_sparse_dot(query_vector, document_vector.T)[0][0]))
@@ -179,7 +179,7 @@ class TFIDFmodel:
             query = [" ".join(query)]
         else:
             query = query_tuple.terms
-        query_vector = preprocessing.normalize(self.vectorizer.transform(query))
+        query_vector = self.vectorizer.transform(query)
         for index, doc in enumerate(self.index2vector):
             # handle sparse vectors correctly
             similarities.append((self.index2key[str(index)], safe_sparse_dot(query_vector, doc.T, dense_output=True)[0][0]))
