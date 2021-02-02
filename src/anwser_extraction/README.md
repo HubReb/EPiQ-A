@@ -10,6 +10,7 @@ TODO:
 There are 2 main tasks to extract accurate answers to preoprocessed questions in the retrieved articles: 
 1) retrieve informative/relevant paragraphs in the article, and 2) extract the exact answer span from those paragraphs. 
 <br>
+
 ### 1. Extract the relevant paragraphs
 We use Okapi BM25 ([gensim.summarization.bm25](https://radimrehurek.com/gensim_3.8.3/summarization/bm25.html))
 
@@ -22,6 +23,7 @@ python3 data_preprocessing.py
 ```
 The preprocessed corpus will be saved in ./data/processed_article_corpus.csv with 2 columns: 'Wikipedia_ID','Text_Proc(preprocessed articles)
 <br>
+
 2. Train the BM25 model (The Okapi BM25 class is in file 'passage_BM25.py')
 * Train the model on the tprocessed_article_corpus.csv (on paragraphs level)
 <br>Run:
@@ -30,6 +32,7 @@ python3 train_BM25.py
 ```
 The trained BM25 model (will be) is saved in trained_bm25.pkl
 <br>
+
 ### 2. Extract the extact answer span
 We use 2 pre-trained models from transformers will tokenize the paragraph:
 * distilbert-base-uncased-squad2, or
