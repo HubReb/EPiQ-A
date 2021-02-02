@@ -17,7 +17,7 @@ python3 data_preprocessing.py
 The preprocessed corpus will be saved in ./data/processed_article_corpus.csv with 2 columns: 'Wikipedia_ID','Text_Proc(preprocessed articles)
 
 2. Train the BM25 model <br>
-The Okapi BM25 class is in file 'passage_BM25.py'
+(The Okapi BM25 class is in file 'passage_BM25.py')
 * Train the model on the tprocessed_article_corpus.csv (on paragraphs level)
 <br>Run:
 ```
@@ -36,11 +36,13 @@ We use the models of transformers(fine-tuned checkpoints):
 * transformers.BertForQuestionAnswering
 
 
-
-
 TODO:
+* Fix the function 'csv_to_list_of_passages()' in data_utils.py to
+* Train BM25 Model
 * Combinate the Reader and trained BM25 model
+* Fine tuning the BM25 parameters on training set and test on dev set
 * Evaluation
+
 * (maybe)This model can answer "yes/no questions" with a sentence instead of "yes/no" answers, thus we might also solve this problem.
 
 Idea:
