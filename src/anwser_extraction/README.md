@@ -1,5 +1,12 @@
 # Anwser extraction
 
+TODO:
+* Fix the function 'csv_to_list_of_passages()' in data_utils.py to
+* Train BM25 Model
+* Combinate the Reader and trained BM25 model
+* Fine tuning the BM25 parameters on training set and test on dev set
+* Evaluation<br><br>
+
 There are 2 main tasks to extract accurate answers to preoprocessed questions in the retrieved articles: 
 1) retrieve informative/relevant paragraphs in the article, and 2) extract the exact answer span from those paragraphs. 
 
@@ -35,13 +42,6 @@ We use the models of transformers(fine-tuned checkpoints):
 * transformers.DistilBertForQuestionAnswering, or
 * transformers.BertForQuestionAnswering
 
-
-TODO:
-* Fix the function 'csv_to_list_of_passages()' in data_utils.py to
-* Train BM25 Model
-* Combinate the Reader and trained BM25 model
-* Fine tuning the BM25 parameters on training set and test on dev set
-* Evaluation
 
 * (maybe)This model can answer "yes/no questions" with a sentence instead of "yes/no" answers, thus we might also solve this problem.
 
