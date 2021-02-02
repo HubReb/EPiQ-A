@@ -23,8 +23,7 @@ python3 data_preprocessing.py
 ```
 The preprocessed corpus will be saved in ./data/processed_article_corpus.csv with 2 columns: 'Wikipedia_ID','Text_Proc(preprocessed articles)<br>
 
-2. Train the BM25 model <br>
-(The Okapi BM25 class is in file 'passage_BM25.py')
+2. Train the BM25 model (The Okapi BM25 class is in file 'passage_BM25.py')
 * Train the model on the tprocessed_article_corpus.csv (on paragraphs level)
 <br>Run:
 ```
