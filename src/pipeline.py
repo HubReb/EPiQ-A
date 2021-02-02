@@ -36,11 +36,13 @@ class CombinedModel:
 
     def get_answer(self, query: str):
         parsed_query = self.question_parser(question=query)
-        docs, _ = query_index(parsed_query.terms, self.inverted_index, self.article_model)
-        ranked_ids = self.article_model.rank_docs(parsed_query, docs)
+        docs, _ = query_index(parsed_query, self.inverted_index, self.article_model)
+        ranked_ids = self.article_model.rank_docs(parsed_query, docs)[:10]
 
-        # get text from ids
-        top_paragraphs = self.dataset[self.dataset["Wikipedia_ID"].isin(ranked_ids)]["Text"]
+        # get text from ids and keep ranking
+        top_paragraphs = []
+        for ranked_id in ranked_ids:
+            top_paragraphs.append(str(self.dataset[(self.dataset.Wikipedia_ID == ranked_id)]["Text"].values))
 
         possible_ansers = []
         for context in top_paragraphs:
