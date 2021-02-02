@@ -21,7 +21,7 @@ We use Okapi BM25 ([gensim.summarization.bm25](https://radimrehurek.com/gensim_3
 ```
 python3 data_preprocessing.py
 ```
-The preprocessed corpus will be saved in ./data/processed_article_corpus.csv with 2 columns: 'Wikipedia_ID','Text_Proc(preprocessed articles)
+The preprocessed corpus will be saved in ./data/processed_article_corpus.csv with 2 columns: 'Wikipedia_ID','Text_Proc(preprocessed articles)<br>
 
 2. Train the BM25 model <br>
 (The Okapi BM25 class is in file 'passage_BM25.py')
@@ -42,8 +42,7 @@ We use the models of transformers(fine-tuned checkpoints):
 * transformers.DistilBertForQuestionAnswering, or
 * transformers.BertForQuestionAnswering
 
-
-* (maybe)This model can answer "yes/no questions" with a sentence instead of "yes/no" answers, thus we might also solve this problem.
+* (maybe)This model can answer "yes/no questions" with a sentence instead of "yes/no" answers, thus we might also solve this problem.<br>
 
 Idea:
 * Evaluation: Macro-averaged F1 score im SQuAD / Jaccard-Index on Token-Overlap
