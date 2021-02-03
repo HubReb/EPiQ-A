@@ -5,8 +5,10 @@
 
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import linear_kernel
 from sklearn import preprocessing
 from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.decomposition import TruncatedSVD as PCA
 import numpy as np
 
 
@@ -27,15 +29,19 @@ class TFIDFmodel:
         index2key: dictionary
             mapping from the index of a document in the dataset to the
             corresponding wikipedia article identifier
-        index2vector: dictionary
-            mapping from the index of a document in the dataset to the
-            corresponding TFIDF vector.
-        model- spacy model, currently en_core_web_sm
-        stop_words: set
-            set of the stop words defined in the model
-        self.vectorizer:
+        doc_vecs:
+            sparse matrix holding tf-idf feature vectors for all wikipedia
+            articles
+        truncated_doc_vecs: np.ndarray
+            matrix holding feature vectors for all wikipedia articles
+            obtained by factorising the tf-idf document-term matrix
+            using SVD
+        vectorizer: TfidfVectorizer
             sklearn.feature_extraction.text.TfidfVectorizer object used
             to calculate TFIDF scores
+        svd_transformer: TruncatedSVD
+            sklearn.decomposition.TruncatedSVD object used to factorise the
+            tf-idf document-term matrix
     Methods:
         create_tf_idf_vectors(self, dataframe_filename):
             Create TFIDF vectors via sklearn's TfidfVectorizer on the
@@ -77,17 +83,14 @@ class TFIDFmodel:
                 TypeError if neither query_tuple nor query and evaluate_component are given
     """
 
-    def __init__(self, model=spacy.load("en_core_web_sm")):
-        """
-        Parameters:
-            model: spacy model to use for lemmatization and stop word
-                removal
-        """
+    def __init__(self):
         self.index2key = {}
-        self.index2vector = []
-        self.model = model
-        self.stop_words = self.model.Defaults.stop_words
         self.vectorizer = None
+        self.svd_transformer = None
+        
+        self.doc_vecs = None
+        self.truncated_doc_vecs = None
+
 
     def create_tf_idf_vectors(self, dataframe_filename):
         """
@@ -102,12 +105,17 @@ class TFIDFmodel:
         """
         content_matrix = []
         content_matrix, self.index2key = load_corpus(dataframe_filename)
+        self.index2key = {key: links.split(" ") for key, links in self.index2key.items()}
         # stop words are already removed
         self.vectorizer = TfidfVectorizer(min_df=5)  # default for now, fine-tune later
         self.vectorizer = self.vectorizer.fit(content_matrix)
-        doc_vecs = self.vectorizer.transform(content_matrix)
-        for vector in doc_vecs:
-            self.index2vector.append(vector)
+        self.doc_vecs = self.vectorizer.transform(content_matrix)
+        
+        # Create truncated document matrix
+        self.svd_transformer = PCA(n_components=512)
+        self.svd_transformer.fit(self.doc_vecs)
+        self.truncated_doc_vecs = self.svd_transformer.transform(self.doc_vecs)
+
 
     def rank_docs(self, docs, query, evaluate_component=False):
         """
@@ -136,14 +144,20 @@ class TFIDFmodel:
         else:
             query = " ".join(query.terms)
         query_vector = self.vectorizer.transform(query)
-        for doc in docs:
-            document_vector = self.index2vector[doc]
-            similarities.append((self.index2key[str(doc)], safe_sparse_dot(query_vector, document_vector.T)[0][0]))
-        ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
-        ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
-        return ranked_docs
+        cosine_similarities = linear_kernel(query_vector, self.doc_vecs[docs])
+        cosine_similarities = cosine_similarities.flatten()
+        related_docs_indices = cosine_similarities.argsort()[::-1]
+        
+        #for doc in docs:
+            #document_vector = self.index2vector[doc]
+            #similarities.append((self.index2key[str(doc)], safe_sparse_dot(query_vector, document_vector.T)[0][0]))
+        #ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
+        #ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
+        #return ranked_docs
+        return [self.index2key[str(index)] for index in related_docs_indices]
 
-    def rank(self, query_tuple=None, query=None, evaluate_component=False):
+
+    def rank(self, query_tuple=None, query=None, evaluate_component=False, pca_approximation=True):
         """Rank all documents to query with cosine similarity of tf-idf values
 
         Arguments:
@@ -155,6 +169,9 @@ class TFIDFmodel:
                  evaluate_component
             evaluate_component (default: False) - boolean value determining if
                 the evaluation setup is executed
+            pca_approximation (default: False) - boolean value determining if
+                to use the truncated feature vectors instead of the full
+                tf-idf vectors
 
         Returns:
             ranked list of wikipedia article identifiers corresponding to the indices
@@ -178,11 +195,34 @@ class TFIDFmodel:
         if not query_tuple:
             query = [" ".join(query)]
         else:
-            query = query_tuple.terms
+            query = [" ".join(query_tuple.terms)]
+
+        # Adapted from https://stackoverflow.com/questions/12118720/python-tf-idf-cosine-to-find-document-similarity
         query_vector = self.vectorizer.transform(query)
-        for index, doc in enumerate(self.index2vector):
-            # handle sparse vectors correctly
-            similarities.append((self.index2key[str(index)], safe_sparse_dot(query_vector, doc.T, dense_output=True)[0][0]))
-        ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
-        ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
-        return ranked_docs
+        if pca_approximation:
+            # First, we calculate the approximate similarities using
+            # from the truncated document-term matrix (this is fast)
+            truncated_query_vector = self.svd_transformer.transform(query_vector)
+            truncated_cosine_similarities = linear_kernel(truncated_query_vector, self.truncated_doc_vecs).flatten()
+            truncated_related_indices = truncated_cosine_similarities.argsort()[::-1]
+            
+            # We extract the 1000 highest-scoring documents and calculate
+            # similarities using the full tf-idf document-term matrix
+            best_truncated_indices = truncated_related_indices[:1000]
+            cosine_similarities = linear_kernel(query_vector, self.doc_vecs[best_truncated_indices])
+            cosine_similarities = cosine_similarities.flatten()
+            related_docs_indices = cosine_similarities.argsort()[::-1]
+            
+            # Finally we resubstitute the ordering of the 1000 highest-scoring
+            # documents using truncated features by the ordering obtained by
+            # using full tf-idf vectors.
+            # Ordering for all other documents is unchanged
+            truncated_related_indices[:1000] = best_truncated_indices[related_docs_indices]
+            related_docs_indices = truncated_related_indices
+        else:
+            # If we don't want to use truncated features (slow), we compute
+            # all similarities using the full tif-idf document-term matrix
+            cosine_similarities = linear_kernel(query_vector, self.doc_vecs).flatten()
+            related_docs_indices = cosine_similarities.argsort()[::-1]
+            
+        return [self.index2key[str(index)] for index in related_docs_indices]
