@@ -73,20 +73,25 @@ def evaluate_models(question_file, model, rank_models):
     for i in range(2, 11):
         p_at_ks_tf[i+1] = 0
         p_at_ks_bm[i+1] = 0
-    for query, correct_id in dataset:
-        reciprocal, correct, correct_rank = evaluate_okapi(query, correct_id, bm_model)
-        for rank in p_at_ks_bm.keys():
-            if rank <= correct_rank:
-                p_at_ks_bm[rank] += 1/rank
-        sum_reciprocals_bm += reciprocal
-        number_correct_bm += correct
+    for idx, (query, correct_id) in enumerate(dataset):
+        print("Evaluating query {}/{}".format(idx+1, len(dataset)), end='\r')
+        #reciprocal, correct, correct_rank = evaluate_okapi(query, correct_id, bm_model)
+        #for rank in p_at_ks_bm.keys():
+            #if rank <= correct_rank:
+                #p_at_ks_bm[rank] += 1/rank
+        #sum_reciprocals_bm += reciprocal
+        #number_correct_bm += correct
+        
         reciprocal, correct, correct_rank = evaluate_tf_idf(query, correct_id, tfidf_model)
         for rank in p_at_ks_tf.keys():
-            if rank <= correct_rank:
+            if rank >= correct_rank:
                 p_at_ks_tf[rank] += 1/rank
         sum_reciprocals_tf += reciprocal
         number_correct_tf += correct
+
+    print()
     print("number", number_of_queries, "sum_reciprocals_bm", sum_reciprocals_bm, "number_correct: ", number_correct_bm)
+    print("number", number_of_queries, "sum_reciprocals_tf", sum_reciprocals_tf, "number_correct: ", number_correct_tf)
     for rank, n_correct in p_at_ks_bm.items():
         p_at_ks_bm[rank] = n_correct/number_of_queries
     for rank, n_correct in p_at_ks_tf.items():
@@ -100,7 +105,14 @@ def evaluate_models(question_file, model, rank_models):
 def evaluate_tf_idf(query, correct_id, tfidf_model):
     """Query TFIDFmodel and return reciprocal and boolean if rank == 1"""
     ranked_ids = tfidf_model.rank(query=query, evaluate_component=True)
-    rank = ranked_ids.index(correct_id) + 1
+    if all([isinstance(link, str) for link in ranked_ids]):  # Model returns single link
+        rank = ranked_ids.index(correct_id) + 1
+    else:  # Model retrieves merged articles, returns multiple links
+        ranks = [rank+1 for rank, links in enumerate(ranked_ids)
+                 if correct in links]
+        assert len(ranks) == 1
+        rank = ranks[0]
+
     reciprocal = 1/rank
     if rank == 1:  # we only check for r_1, so it's either 1 or precision at 1 is automatically 0
         correct = 1
@@ -129,21 +141,23 @@ def evaluate(datapath):
     tfidf_model, inverted_index = load_utilities_for_tfidf()
     query_models = [bm_model, tfidf_model]
     # dev set
-    (bm_mmr, bm_pr_k), (tf_mmr, tf_pr_k), p_at_k = evaluate_models(join(datapath, "nq_dev.csv"), model, query_models)
+    (bm_mmr, bm_pr_k, bm_p_ks), (tf_mmr, tf_pr_k, tf_pks) = evaluate_models(join(datapath, "nq_dev.csv"), model, query_models)
     print("Okapi BM25 results on dev set:")
-    print(f"MMR: {bm_mmr}, Precision@1: {tf_pr_k}")
+    print(f"MMR: {bm_mmr}, Precision@1: {bm_pr_k}")
     print("TFIDF with cosine similarity results on dev set:")
     print(f"MMR: {tf_mmr}, Precision@1: {tf_pr_k}")
     print("Precision@k")
     for rank, p in p_at_k.items():
         print(f"k = {rank}: {p}")
     # see how good we are on the training set
-    (bm_mmr, bm_pr_k), (tf_mmr, tf_pr_k), p_at_k = evaluate_models(join(datapath, "nq_train.csv"), model, query_models)
+    (bm_mmr, bm_pr_k, bm_p_at_k), (tf_mmr, tf_pr_k, tf_p_at_k) = evaluate_models(join(datapath, "nq_train.csv"), model, query_models)
     print("Okapi BM25 results on training set:")
     print(f"MMR: {bm_mmr}, Precision@1: {bm_pr_k}")
     print("TFIDF with cosine similarity results on training set:")
     print(f"MMR: {tf_mmr}, Precision@1: {tf_pr_k}")
-    for rank, p in p_at_k.items():
+    for rank, p in bm_p_at_k.items():
+        print(f"k = {rank}: {p}")
+    for rank, p in tf_p_at_k.items():
         print(f"k = {rank}: {p}")
     # TODO: Fine-tune models on development set
 
@@ -154,7 +168,16 @@ def evaluate_test(datapath):
     bm_model, inverted_index = load_utilities_for_bm()
     tfidf_model, inverted_index = load_utilities_for_tfidf()
     query_models = [bm_model, tfidf_model]
-    (bm_mmr, bm_pr_k), (tf_mmr, tf_pr_k) = evaluate_models(join(datapath, "natural_questions_dev.csv"), model, query_models)
+    (bm_mmr, bm_pr_k, bm_p_ks), (tf_mmr, tf_pr_k, tf_pks) = evaluate_models(join(datapath, "natural_questions_dev.csv"), model, query_models)
+    print("Okapi BM25 results on dev set:")
+    print(f"MMR: {bm_mmr}, Precision@1: {bm_pr_k}")
+    print("TFIDF with cosine similarity results on dev set:")
+    print(f"MMR: {tf_mmr}, Precision@1: {tf_pr_k}")
+    print("Precision@k")
+    for rank, p in bm_p_ks.items():
+        print(f"k = {rank}: {p}")
+    for rank, p in tf_pks.items():
+        print(f"k = {rank}: {p}")
     print("Okapi BM25 results on test set:")
     print(f"MMR: {bm_mmr}, Precision@1: {bm_pr_k}")
     print("TFIDF with cosine similarity results on test set:")

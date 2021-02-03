@@ -4,5 +4,5 @@
 
 # constants
 
-DATAPATH = "../../data"
+DATAPATH = "../../data/"
 DATAPATH_PROCESSED = "../../data/article_retrieval"
