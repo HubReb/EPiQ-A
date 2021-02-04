@@ -31,13 +31,14 @@ def query_index(query, inverted_index, model, processing=False, must_have=None, 
     Arguments:
         query - query to retrieve documents for
         inverted_index - dictionary from words to the document indices that contain them
+        model - ranking model for getting model's stop word list
         processing - boolean to determine if preprocessing is necessary
         must_have - list of terms that must be present in the document to be drawn from index
+        title_check - list of article ids whose article title contain words of the query
 
     Returns:
         best_doc_guesses - indices of documents that contain words of the query
         query - processed query
-        model - spacy model for lemmatization and stop word list
 
     Raises:
         ValueError if must_have is specifed but an empty list
