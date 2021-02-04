@@ -87,10 +87,9 @@ class TFIDFmodel:
         self.index2key = {}
         self.vectorizer = None
         self.svd_transformer = None
-        
+        self.stop_words = spacy.load('en_core_web_sm').Defaults.stop_words
         self.doc_vecs = None
         self.truncated_doc_vecs = None
-
 
     def create_tf_idf_vectors(self, dataframe_filename):
         """
@@ -106,6 +105,7 @@ class TFIDFmodel:
         content_matrix = []
         content_matrix, self.index2key = load_corpus(dataframe_filename)
         self.index2key = {key: links.split(" ") for key, links in self.index2key.items()}
+        self.key2index = {link: index for index, links in self.index2key.items() for link in links}
         # stop words are already removed
         self.vectorizer = TfidfVectorizer(min_df=5)  # default for now, fine-tune later
         self.vectorizer = self.vectorizer.fit(content_matrix)
@@ -115,7 +115,6 @@ class TFIDFmodel:
         self.svd_transformer = PCA(n_components=512)
         self.svd_transformer.fit(self.doc_vecs)
         self.truncated_doc_vecs = self.svd_transformer.transform(self.doc_vecs)
-
 
     def rank_docs(self, docs, query, evaluate_component=False):
         """
@@ -138,22 +137,18 @@ class TFIDFmodel:
                 "namedTuple Question is mutuably exlusive with evaluation_component"
                 "flag and processed query string!"
             )
-        similarities = []
         if evaluate_component:
             query = [" ".join(query)]
         else:
             query = " ".join(query.terms)
         query_vector = self.vectorizer.transform(query)
-        cosine_similarities = linear_kernel(query_vector, self.doc_vecs[docs])
+        doc_indices = []
+        for doc in docs:
+            doc_indices.append(self.key2index[doc])
+        doc_indices = list(set(doc_indices))
+        cosine_similarities = linear_kernel(query_vector, self.doc_vecs[doc_indices])
         cosine_similarities = cosine_similarities.flatten()
         related_docs_indices = cosine_similarities.argsort()[::-1]
-        
-        #for doc in docs:
-            #document_vector = self.index2vector[doc]
-            #similarities.append((self.index2key[str(doc)], safe_sparse_dot(query_vector, document_vector.T)[0][0]))
-        #ranked_sims = sorted(similarities, key=lambda x: x[1], reverse=True)
-        #ranked_docs = [doc_sim[0] for doc_sim in ranked_sims]
-        #return ranked_docs
         return [self.index2key[str(index)] for index in related_docs_indices]
 
 
@@ -191,7 +186,6 @@ class TFIDFmodel:
                 raise TypeError(
                     "Evaluation setup requires both processed question and evaluate_component flag"
                 )
-        similarities = []
         if not query_tuple:
             query = [" ".join(query)]
         else:
