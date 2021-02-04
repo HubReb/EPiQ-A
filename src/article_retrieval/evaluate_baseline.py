@@ -75,13 +75,12 @@ def evaluate_models(question_file, model, rank_models):
         p_at_ks_bm[i+1] = 0
     for idx, (query, correct_id) in enumerate(dataset):
         print("Evaluating query {}/{}".format(idx+1, len(dataset)), end='\r')
-        #reciprocal, correct, correct_rank = evaluate_okapi(query, correct_id, bm_model)
-        #for rank in p_at_ks_bm.keys():
-            #if rank <= correct_rank:
-                #p_at_ks_bm[rank] += 1/rank
-        #sum_reciprocals_bm += reciprocal
-        #number_correct_bm += correct
-        
+        reciprocal, correct, correct_rank = evaluate_okapi(query, correct_id, bm_model)
+        for rank in p_at_ks_bm.keys():
+            if rank >= correct_rank:
+                p_at_ks_bm[rank] += 1/rank
+        sum_reciprocals_bm += reciprocal
+        number_correct_bm += correct
         reciprocal, correct, correct_rank = evaluate_tf_idf(query, correct_id, tfidf_model)
         for rank in p_at_ks_tf.keys():
             if rank >= correct_rank:
@@ -124,7 +123,13 @@ def evaluate_tf_idf(query, correct_id, tfidf_model):
 def evaluate_okapi(query, correct_id, bm_model):
     """Query BM25 model and return reciprocal and boolean if rank == 1"""
     ranked_ids = bm_model.rank(query=query, evaluate_component=True)
-    rank = ranked_ids.index(correct_id) + 1  # add 1 because index starts at 0
+    if all([isinstance(link, str) for link in ranked_ids]):  # Model returns single link
+        rank = ranked_ids.index(correct_id) + 1     # add 1 because index starts at 0
+    else:  # Model retrieves merged articles, returns multiple links
+        ranks = [rank+1 for rank, links in enumerate(ranked_ids)
+                 if correct_id in links]
+        # assert len(ranks) == 1
+        rank = ranks[0]
     if rank == 1:
         correct = 1
     else:
@@ -147,7 +152,7 @@ def evaluate(datapath):
     print("TFIDF with cosine similarity results on dev set:")
     print(f"MMR: {tf_mmr}, Precision@1: {tf_pr_k}")
     print("Precision@k")
-    for rank, p in p_at_k.items():
+    for rank, p in bm_p_ks.items():
         print(f"k = {rank}: {p}")
     # see how good we are on the training set
     (bm_mmr, bm_pr_k, bm_p_at_k), (tf_mmr, tf_pr_k, tf_p_at_k) = evaluate_models(join(datapath, "nq_train.csv"), model, query_models)
