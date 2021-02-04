@@ -110,7 +110,7 @@ def evaluate_tf_idf(query, correct_id, tfidf_model):
     else:  # Model retrieves merged articles, returns multiple links
         ranks = [rank+1 for rank, links in enumerate(ranked_ids)
                  if correct_id in links]
-        assert len(ranks) == 1
+        # assert len(ranks) == 1
         rank = ranks[0]
 
     reciprocal = 1/rank

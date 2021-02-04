@@ -11,6 +11,7 @@ from os.path import isfile
 
 import pandas as pd
 import spacy
+from tqdm import tqdm
 
 
 def read_index(filename):
@@ -50,6 +51,7 @@ def process_corpus(dataframe_filename, model):
     counter = 0
     index2wikiid = {}
     for document, wiki_id in zip(corpus, wiki_ids):
+        print("Processing document {}/{}".format(counter+1, len(corpus)))
         index2wikiid[counter] = wiki_id
         counter += 1
         processed_corpus.append(get_article_content(document, model, stop_words))
@@ -73,10 +75,15 @@ def lemmatize_sentence(sentence, model, stop_words):
 
 def get_article_content(article, model, stop_words):
     """Tokenize and lemmatize article."""
-    regex = re.compile(r"\n\n+")
-    article = re.sub(regex, "", article)
-    lemmatized_article = lemmatize_sentence(article, model, stop_words)
-    return lemmatized_article
+    # regex = re.compile(r"\n\n+")
+    # article = re.sub(regex, "", article)
+    article_paragraphs = article.split("\n\n")
+    lemmatized_article = []
+    for i, paragraph in enumerate(article_paragraphs):
+        print("Lemmatizing paragraph {}/{}".format(i+1, len(article_paragraphs)), end='\r')
+        lemmatized_paragraph = lemmatize_sentence(paragraph, model, stop_words)
+        lemmatized_article.append(" ".join(lemmatized_paragraph))
+    return "\n\n".join(lemmatized_article)
 
 
 def load_corpus(filename):
@@ -91,6 +98,7 @@ def load_corpus(filename):
                 documents.append(" ".join(row))
         index2key = read_index(f"{split_filename}_index2key.json")
     else:
-        model = spacy.load('en_core_web_sm')
+        model = spacy.load('en_core_web_sm', exclude=["ner", "parser", "tagger", "tok2vec"])
+        model.max_length = 10000000
         documents, index2key = process_corpus(filename, model)
     return documents, index2key
