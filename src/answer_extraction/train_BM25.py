@@ -1,48 +1,20 @@
 # TODO:
 #  1. train BM25 on train_article to extract
 #  2. TEST BM25 + QA model on dev_article
-
+import time
 import pickle
-from os.path import isfile
-from data_utils import load_csv
 from gensim.summarization.bm25 import BM25
-
-class Okapi_BM_25:
-    def __init__(self, filename="trained_bm25.pkl"):
-
-        if isfile(filename):
-            self.bm25_model = self.load_model(filename)  # ?
-        else:
-            self.bm25_model = None
-
-    def load_model(self, filename):
-        """Load a trained bm25 model from a pickle file."""
-        with open(filename, "rb") as f:
-            return pickle.load(f)
-
-    def fit(self, csv_path):
-        """Fit gensim's BM25 model to data."""
-        # articles: str
-        dataframe = load_csv(csv_path)
-
-        processed_articles = ''
-        # loop through numpy array
-        for articles in dataframe.Text_Proc.values:
-            processed_articles = articles + '\n' # a big string
-
-        passages = [passage.strip() for passage in processed_articles.splitlines()]  # a list of sentences of the articles
-
-        self.bm25_model = BM25(passages)
+from passage_BM25 import Okapi_BM_25
 
 def train(datapath):
     """Train okapi BM25 model and save it"""
-    BM25 = Okapi_BM_25()
-    BM25.fit(datapath)
-    # sav
+    start = time.time()
+    OBM25 = Okapi_BM_25(datapath, "")
+    OBM25.bm25_model = BM25(OBM25.passages)
     with open("trained_bm25.pkl", "wb") as f:
-        pickle.dump(BM25, f)
+        pickle.dump(OBM25, f)
+    end = time.time()
+    print("Training completed. Model has been saved as trained_bm25.pkl \nRum time: ", end - start)
 
 if __name__ == "__main__":
-
-    train('./data/corpus_processed.csv')
-    #train('./data/corpus_processed.csv')
+    train('./data/processed_article_corpus.csv')

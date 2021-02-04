@@ -1,78 +1,24 @@
-from gensim.summarization.bm25 import BM25
+#!/usr/bin/env python3
+#TODO: run data on
+import pickle
 import torch
-from transformers import DistilBertTokenizer, TFDistilBertForQuestionAnswering
 from transformers import DistilBertTokenizer, DistilBertForQuestionAnswering
-import spacy
-from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 from transformers import BertForQuestionAnswering
 from transformers import BertTokenizer
+from data_utils import load_csv
+from passage_BM25 import Okapi_BM_25
+import spacy
+import time
 
-class ContextRetriever:
-
-    """Searching for relevant context(Context retriever)
-    Preprocess: Tokenize, Lemmatize(optional)
-    Using BM25 to rank a list of passages based on a given query.
-    Extract the top N results from BM25 and build a paragraph out of all those N sentences.
-
-    :param nlp: spacy
-    :param n_passage: select the n top relevant passages by BM25
-    :param preprocess: default  = True.
-            - True: tokenize and lemmatize the sentences(for real case)
-            - False: only tokenize the sentences(for testing)
-    """
-
-    def __init__(self, nlp, n_passages, preprocess = True):
-        self.nlp = nlp
-        self.n_passages = n_passages
-        self.preprocess = preprocess
-
-    def tokenize(self, sentence): #### we dont need on testing!
-        """
-        :param sentence: a sentence string
-        :return:
-             - if preprocess == True: a list of tokenized and lemmatized strings
-             - else: a list of tokenized strings
-        """
-
-        if self.preprocess == True:
-            return [token.lemma_.lower() for token in self.nlp(sentence)]
-        else:
-            return [token.lower() for token in self.nlp(sentence)]
-
-    def get_n_top_passages(self, articles: str, question: str):
-        """ONLY WORK IF THE RETRIEVED DOCUMENTS USE NEWLINES TO SEPARATE PARAGRAPHS.
-        :param articles: the joint top n answer relevant articles(str)
-        :param question: preoprocessed question(str)
-        :return: jointed top n passages from the articles as a final article(str)
-        """
-
-        # doc = self.nlp(articles)
-
-        passages = [passage.strip() for passage in articles.splitlines()] # a list of sentences of the articles
-
-        #print(passages)
-        # a list of lists of tokens(a list of sentences)
-        documents = [self.tokenize(passage) for passage in passages] # self.tokenize(sent): a list of tokens
-
-        bm25_scores = BM25(documents).get_scores(self.tokenize(question))
-
-        # get top n relevant passages
-        best_docs = sorted(range(len(bm25_scores)), key=lambda i: bm25_scores[i])[self.n_passages*(-1):]
-
-
-        questionContext = ""
-        for fr in best_docs:
-            questionContext = questionContext + " ".join(documents[fr])
-
-        return questionContext
-
-
-class AnswerExtracter:
+class AnswerExtracter():
     """Extract exact answer from the extracted passages
     Using the pretrained models from the transformers library for:
         - tokenization: to tokenize the question and the question context
         - question answering:  to find the tokens for the answer
     """
+
+    def __init__(self):
+        self.nlp = spacy.load('en_core_web_sm')
 
     def getAnswer(self, question: str, questionContext: str, model="distilbert"):
         ###we’ll need to make all the vectors the same size by padding shorter sentences with the token id 0
@@ -84,7 +30,17 @@ class AnswerExtracter:
             tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased', return_token_type_ids=True)
             model = DistilBertForQuestionAnswering.from_pretrained('distilbert-base-uncased-distilled-squad')
 
+        # try:
+        #     print("Bert Tokenizing...")
+        #     inputs = tokenizer(question, questionContext, return_tensors='pt')
+        # except IndexError:
+
+        # Except IndexError
+        doc = self.nlp(question)
+        questionContext = ' '.join([str(token) for token in doc][:511]).strip()
+        print("Bert Tokenizing...")
         inputs = tokenizer(question, questionContext, return_tensors='pt')
+
         start_positions = torch.tensor([1])
         end_positions = torch.tensor([3])
 
@@ -104,27 +60,42 @@ class AnswerExtracter:
         answer = ' '.join(tokens[start_index:end_index + 1])
         return answer
 
+
 if __name__ == '__main__':
-
-    articles = "The predominant language is Cantonese, a variety of Chinese originating in Guangdong. It is spoken by 94.6 per cent of the population, 88.9 per cent as a first language and 5.7 per cent as a second language. Slightly over half the population (53.2 per cent) speaks English, the other official language; 4.3 per cent are native speakers, and 48.9 per cent speak English as a second language Code-switching, mixing English and Cantonese in informal conversation, is common among the bilingual population. \nPost-handover governments have promoted Mandarin, which is currently about as prevalent as English; 48.6 per cent of the population speaks Mandarin, with 1.9 per cent native speakers and 46.7 per cent speaking it as a second language. \nTraditional Chinese characters are used in writing, rather than the simplified characters used on the mainland. "
-    question = "what's the language of hongkong"
-
-    nlp = spacy.load('en_core_web_sm')
-    nlp.add_pipe(nlp.create_pipe('sentencizer'))
+    start = time.time()
+    with open("trained_bm25.pkl", "rb") as f:
+        model = pickle.load(f)
 
     # top n result of BM25
-    n_passages = 2
-    contextRetriever = ContextRetriever(nlp, n_passages, preprocess = True)
-    questionContext = contextRetriever.get_n_top_passages(articles, question)
+    n_passages = 3
+
+    #local & last
+    articles_csv_path = "./data/processed_article_corpus.csv"
+
+    bm25 = Okapi_BM_25(articles_csv_path, bm25_model_filename="trained_bm25.pkl")
 
     answerExtracter = AnswerExtracter()
-    answer = answerExtracter.getAnswer(question, questionContext, model = 'distilbert') # model = ''
+    # local
+    question_dev_dataframe = load_csv("./data/nq_dev_short.csv")
 
-    print ("Question: ", question)
-    print('Text: ', articles)
-    print("Question Context: ", questionContext)
+    question_dev_dataframe["Question Context"] = 0
+    question_dev_dataframe["Predicted Answer"] = 0
+    # last
+    # question_dev_dataframe = load_csv("/proj/mahoni/project/data/natural_questions_train.csv")
 
-    print ("Anwser: ", answer)
+    print("Predicting answers...")
+    for i, row in question_dev_dataframe.iterrows():
+        questionContext = bm25.get_n_top_passages(n_passages, row["Question"])
+        # print(type(questionContext), questionContext)
+        print(question_dev_dataframe.columns)
+        question_dev_dataframe.at[i, question_dev_dataframe["Question Context"]] = questionContext
+        question = row["Question"]
 
+        predictedAnswer = answerExtracter.getAnswer(question, questionContext, model='distilbert')
+        # print(type(predictedAnswer), predictedAnswer)
+        question_dev_dataframe.at[i, "Predicted Answer"] = predictedAnswer
 
-
+    question_dev_dataframe.to_csv(f'./data/predicted_answers.csv', encoding='utf-8', index=False)
+    print(f'\nData frame written to predicted_answers.csv')
+    end = time.time()
+    print("\nRum time: ", end - start)

@@ -1,9 +1,11 @@
 import spacy
 from tqdm import tqdm
-from data_utils import merge_train_dev_articles
+from data_utils import merge_train_dev_articles, load_csv
 import re
 import html
 from subprocess import call
+import csv
+import codecs
 
 # Preprocess Text(articles) in dataframe
 class Data():
@@ -11,7 +13,6 @@ class Data():
         # catch error if spaCy model is not available, installs it and restarts the script
         self.df = dataframe
         self.fp = f'./data/processed_article_corpus.csv'
-
         try:
             self.nlp = spacy.load(model)
         except OSError:
@@ -41,7 +42,6 @@ class Data():
 
         return text
 
-
     def remove_nonascii(self, text: str) -> str:
         """Removes all non-ASCII characters from text
 
@@ -51,9 +51,7 @@ class Data():
         return text.encode('ascii', 'ignore').decode('ascii')
 
     def escape_html(self, text: str) -> str:
-
         s = html.escape("""& < " ' >""").split()  # s = ["&amp;", "&lt;", "&quot;", "&#x27;", "&gt;"]
-
         for e in s:
             text = text.replace(e, ' ').strip()
         return text
@@ -64,25 +62,9 @@ class Data():
         :param text: text to be preprocessed
         :return str: text with all and multiple whitespaces removed
         """
-        whitespaces_pattern = re.compile(r'\s+')
+        whitespaces_pattern = re.compile(r' +')
 
         return re.sub(whitespaces_pattern, ' ', text).strip()
-
-    def remove_empty_lines(self, text: str) -> str:
-        """Removes mutiple whitespaces from a text
-
-        :param text: text to be preprocessed
-        :return str: text with all and multiple whitespaces removed
-        """
-
-        lines = text.split("\n")
-        non_empty_lines = [line for line in lines if line.strip() != ""]
-
-        string_without_empty_lines = ""
-        for line in non_empty_lines:
-            string_without_empty_lines += line + "\n"
-
-        return string_without_empty_lines.strip()
 
     def preprocess(self, lowercase: bool = True):
         """Complete preprocessing pipeline of underlying dataframe
@@ -92,8 +74,6 @@ class Data():
         """
         tqdm.pandas(desc='Processing data', ncols=100)
 
-        # print(self.df.columns.values)
-        # print(self.df)
         if lowercase:
             self.df['Text_Proc'] = self.df['Text'].str.lower()
 
@@ -102,31 +82,31 @@ class Data():
         self.df['Text_Proc'] = self.df['Text_Proc'].progress_apply(self.remove_urls)
         self.df['Text_Proc'] = self.df['Text_Proc'].progress_apply(self.escape_html)
         self.df['Text_Proc'] = self.df['Text_Proc'].progress_apply(self.remove_some_punctuations)
-        self.df['Text_Proc'] = self.df['Text_Proc'].progress_apply(self.remove_empty_lines)
         self.df['Text_Proc'] = self.df['Text_Proc'].progress_apply(self.remove_multiple_whitespaces)
-
-
-
 
     def main(self):
         """Preprocessing and saving processed .csv table
         """
         self.preprocess(lowercase=True)
         # Only sace column 'Wikipedia_ID' and 'Text_Proc'
-        selected_dataframe = self.df.filter(['Wikipedia_ID', 'Text_Proc'])
-        selected_dataframe.to_csv(self.fp, encoding='utf-8', index=False)
+        selected_dataframe = self.df[['Wikipedia_ID', 'Text_Proc']]
+        selected_dataframe.to_csv(self.fp, index=False) #
+        # self.df.to_csv(self.fp, index=False)
         print(f'\nData frame written to {self.fp}')
-
 
 if __name__ == '__main__':
     # Local
-    # train_wiki_text_file = "./data/nq_train_wiki_text_short.csv"
-    # dev_wiki_text_file = "./data/nq_dev_wiki_text_short.csv"
-    # In last:
-    train_wiki_text_file = "/proj/mahoni/project/data/nq_train_wiki_text.csv"
-    dev_wiki_text_file = "/proj/mahoni/project/data/nq_dev_wiki_text.csv"
+    train_wiki_text_file = "./data/nq_train_wiki_text_short.csv"
+    dev_wiki_text_file = "./data/nq_dev_wiki_text_short.csv"
 
-    train_articles_df = merge_train_dev_articles(train_wiki_text_file, dev_wiki_text_file)
+    # Last:
+    # train_wiki_text_file = "/proj/mahoni/project/data/nq_train_wiki_text.csv"
+    # dev_wiki_text_file = "/proj/mahoni/project/data/nq_dev_wiki_text.csv"
 
-    preprocess_corpus = Data(train_articles_df)
+    merged_path = f'./data/nq_merged_wiki_text.csv'
+    merge_train_dev_articles(train_wiki_text_file, dev_wiki_text_file, merged_path)
+
+    # ?? df_train_dev = load_csv("./data/nq_dev_train_wiki_text_merged_short.csv")
+    df_train_dev = load_csv(merged_path)
+    preprocess_corpus = Data(df_train_dev)
     preprocess_corpus.main()
