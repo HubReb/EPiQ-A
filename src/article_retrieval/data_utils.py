@@ -51,7 +51,8 @@ def process_corpus(dataframe_filename, model):
     counter = 0
     index2wikiid = {}
     for document, wiki_id in zip(corpus, wiki_ids):
-        print("Processing document {}/{}".format(counter+1, len(corpus)))
+        if counter % 1000 == 0:
+            print("Processing document {}/{}".format(counter+1, len(corpus)))
         index2wikiid[counter] = wiki_id
         counter += 1
         processed_corpus.append(get_article_content(document, model, stop_words))
@@ -80,10 +81,9 @@ def get_article_content(article, model, stop_words):
     article_paragraphs = article.split("\n\n")
     lemmatized_article = []
     for i, paragraph in enumerate(article_paragraphs):
-        print("Lemmatizing paragraph {}/{}".format(i+1, len(article_paragraphs)), end='\r')
         lemmatized_paragraph = lemmatize_sentence(paragraph, model, stop_words)
-        lemmatized_article.append(" ".join(lemmatized_paragraph))
-    return "\n\n".join(lemmatized_article)
+        lemmatized_article.extend(lemmatized_paragraph)
+    return lemmatized_article
 
 
 def load_corpus(filename):
