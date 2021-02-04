@@ -8,7 +8,8 @@ from os.path import isfile
 
 import spacy
 
-from gensim.summarization.bm25 import BM25
+# from gensim.summarization.bm25 import BM25
+from rank_bm25 import BM25Okapi as BM25
 from article_retrieval.data_utils import load_corpus
 
 
@@ -112,6 +113,7 @@ class Okapi25:
     def fit(self, dataframe_filename):
         """Fit gensim's BM25 model to data."""
         processed_corpus, self.index2wikiid = load_corpus(dataframe_filename)
+        self.index2wikiid = {key: links.split(" ") for key, links in self.index2wikiid.items()}
         self.model = BM25(processed_corpus)
 
     def rank(self, query_tuple=None, query=None, evaluate_component=False):
