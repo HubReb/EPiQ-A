@@ -132,3 +132,7 @@ dmypy.json
 data/**/*.json
 data/**/*.jsonl
 data/**/*.csv
+
+
+src/**/*pkl
+src/**/*json
