@@ -14,4 +14,3 @@ numpy==1.19.4
 nltk
 scikit-learn
 matplotlib
-tensorflow
