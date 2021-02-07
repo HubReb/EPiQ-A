@@ -30,12 +30,6 @@ class AnswerExtracter():
             tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased', return_token_type_ids=True)
             model = DistilBertForQuestionAnswering.from_pretrained('distilbert-base-uncased-distilled-squad')
 
-        # try:
-        #     print("Bert Tokenizing...")
-        #     inputs = tokenizer(question, questionContext, return_tensors='pt')
-        # except IndexError:
-
-        # Except IndexError
         doc = self.nlp(question)
         questionContext = ' '.join([str(token) for token in doc][:511]).strip()
         print("Bert Tokenizing...")
@@ -43,12 +37,11 @@ class AnswerExtracter():
 
         start_positions = torch.tensor([1])
         end_positions = torch.tensor([3])
-
         outputs = model(**inputs, start_positions=start_positions, end_positions=end_positions)
         start_scores = outputs.start_logits
         end_scores = outputs.end_logits
 
-        # answer span predictor
+        # Answer span predictor
         start_index = torch.argmax(start_scores)
         end_index = torch.argmax(end_scores)
 
@@ -69,18 +62,17 @@ if __name__ == '__main__':
     # top n result of BM25
     n_passages = 3
 
-    #local
+    # Local
     # articles_csv_path = "./data/processed_article_corpus.csv"
-    # last
+    # Last
     articles_csv_path = "./processed_merged_wiki_text.csv"
 
     bm25 = Okapi_BM_25(articles_csv_path, bm25_model_filename="trained_bm25.pkl")
 
     answerExtracter = AnswerExtracter()
-    # local
+    # Local
     # question_dev_dataframe = load_csv("./data/nq_dev_short.csv")
-
-    # last
+    # Last
     question_dev_dataframe = load_csv("/proj/epiqa/EPiQ-A/data/natural_questions_train.csv")
 
     question_dev_dataframe["Question Context"] = 0
@@ -88,6 +80,8 @@ if __name__ == '__main__':
 
     print("Predicting answers...")
     for i, row in question_dev_dataframe.iterrows():
+        #print(type(row))
+        print(type(row["Question"]))
         questionContext = bm25.get_n_top_passages(n_passages, row["Question"])
         # print(type(questionContext), questionContext)
         question_dev_dataframe.at[i, question_dev_dataframe["Question Context"]] = questionContext

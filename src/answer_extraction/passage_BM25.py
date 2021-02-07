@@ -1,3 +1,5 @@
+# TODO
+#  add a only from bert predicted answer
 import pickle
 from os.path import isfile
 from data_utils import load_csv, csv_to_list_of_passages
@@ -41,8 +43,7 @@ class Okapi_BM_25():
         :return: jointed top n passages from the articles as a final article(str)
         """
 
-        for passage in self.passages:
-            bm25_scores = self.bm25_model.get_scores(self.tokenize_question(question))
+        bm25_scores = self.bm25_model.get_scores(self.tokenize_question(question))
 
         # get top n relevant passages
         best_docs = sorted(range(len(bm25_scores)), key=lambda i: bm25_scores[i])[n_passages * (-1):]

@@ -9,8 +9,8 @@ from passage_BM25 import Okapi_BM_25
 def train(datapath):
     """Train okapi BM25 model and save it"""
     start = time.time()
-    OBM25 = Okapi_BM_25(datapath, "")
-    OBM25.bm25_model = BM25(OBM25.passages)
+    OBM25 = Okapi_BM_25(datapath)
+    OBM25.bm25_model = BM25(OBM25.passages, k=1.5, b=0.75, epsilon=0.25)
     with open("trained_bm25.pkl", "wb") as f:
         pickle.dump(OBM25, f)
     end = time.time()
