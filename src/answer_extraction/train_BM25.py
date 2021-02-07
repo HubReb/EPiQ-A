@@ -31,4 +31,3 @@ if __name__ == "__main__":
 
     # Last
     train('./processed_merged_wiki_text.csv')
-    Reader.main()

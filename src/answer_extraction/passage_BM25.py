@@ -18,6 +18,7 @@ class Okapi_BM_25():
 
         # we need to start from scratch
         else:
+            print('Train and save a new bm25 model.')
             self.passages = csv_to_list_of_passages(csv_path)  # a list of passages of the articles
             # print(self.passages)
             # print("passage: ", len(self.passages))

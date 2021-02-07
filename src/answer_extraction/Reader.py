@@ -55,7 +55,7 @@ class AnswerExtracter():
         return answer
 
 
-def main():
+if __name__ == "__main__":
     start = time.time()
 
     # top n result of BM25
