@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#TODO: run data on
+# TODO: run data on
 import pickle
 import torch
 from transformers import DistilBertTokenizer, DistilBertForQuestionAnswering
@@ -9,6 +9,7 @@ from data_utils import load_csv
 from passage_BM25 import Okapi_BM_25
 import spacy
 import time
+
 
 class AnswerExtracter():
     """Extract exact answer from the extracted passages
@@ -61,17 +62,17 @@ def main():
     n_passages = 3
 
     # Local
-    articles_csv_path = "./data/processed_article_corpus.csv"
+    # articles_csv_path = "./data/processed_article_corpus.csv"
     # Last
-    # articles_csv_path = "./processed_merged_wiki_text.csv"
+    articles_csv_path = "./processed_merged_wiki_text.csv"
 
     bm25 = Okapi_BM_25(articles_csv_path, bm25_model_filename="trained_bm25_2.pkl")
 
     answerExtracter = AnswerExtracter()
     # Local
-    question_dev_dataframe = load_csv("./data/nq_dev_short.csv")
+    # question_dev_dataframe = load_csv("./data/nq_dev_short.csv")
     # Last
-    # question_dev_dataframe = load_csv("/proj/epiqa/EPiQ-A/data/natural_questions_train.csv")
+    question_dev_dataframe = load_csv("/proj/epiqa/EPiQ-A/data/natural_questions_train.csv")
 
     question_dev_dataframe["Question Context"] = ''
     question_dev_dataframe["Predicted Answer"] = ''
@@ -86,9 +87,9 @@ def main():
         # print(type(predictedAnswer), predictedAnswer)
         question_dev_dataframe.at[i, "Predicted Answer"] = predictedAnswer
     # Local
-    question_dev_dataframe.to_csv(f'./data/predicted_answers.csv', encoding='utf-8', index=False)
+    # question_dev_dataframe.to_csv(f'./data/predicted_answers.csv', encoding='utf-8', index=False)
     # Last
-    # question_dev_dataframe.to_csv(f'./predicted_answers.csv', encoding='utf-8', index=False)
+    question_dev_dataframe.to_csv(f'./predicted_answers.csv', encoding='utf-8', index=False)
     print(f'\nData frame written to predicted_answers.csv')
     end = time.time()
     print("\nRum time: ", end - start)

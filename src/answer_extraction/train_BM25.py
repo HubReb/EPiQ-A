@@ -27,8 +27,8 @@ def train(datapath):
 
 if __name__ == "__main__":
     # Local
-    train('./data/processed_article_corpus.csv')
+    # train('./data/processed_article_corpus.csv')
 
     # Last
-    # train('./processed_merged_wiki_text.csv')
+    train('./processed_merged_wiki_text.csv')
     Reader.main()
