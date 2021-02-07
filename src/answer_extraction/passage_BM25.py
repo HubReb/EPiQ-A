@@ -6,7 +6,7 @@ from data_utils import load_csv, csv_to_list_of_passages
 import spacy
 
 class Okapi_BM_25():
-    def __init__(self, csv_path, bm25_model_filename="trained_bm25.pkl"):
+    def __init__(self, csv_path, bm25_model_filename="trained_bm25_2.pkl"):
 
         # we have a trained model
         if isfile(bm25_model_filename):
