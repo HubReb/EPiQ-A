@@ -19,7 +19,7 @@ def train(datapath):
     epsilon = 0.25
     OBM25.bm25_model = BM25(OBM25.passages, k, b, epsilon)
 
-    with open("trained_bm25_2", "wb") as f:
+    with open("trained_bm25_2.pkl", "wb") as f:
         pickle.dump(OBM25, f)
     end = time.time()
     print("Training completed. Model has been saved as trained_bm25_2.pkl \nRum time: ", end - start)
