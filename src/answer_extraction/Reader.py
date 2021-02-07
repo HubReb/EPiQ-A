@@ -69,33 +69,37 @@ if __name__ == '__main__':
     # top n result of BM25
     n_passages = 3
 
-    #local & last
-    articles_csv_path = "./data/processed_article_corpus.csv"
+    #local
+    # articles_csv_path = "./data/processed_article_corpus.csv"
+    # last
+    articles_csv_path = "./processed_merged_wiki_text.csv"
 
     bm25 = Okapi_BM_25(articles_csv_path, bm25_model_filename="trained_bm25.pkl")
 
     answerExtracter = AnswerExtracter()
     # local
-    question_dev_dataframe = load_csv("./data/nq_dev_short.csv")
+    # question_dev_dataframe = load_csv("./data/nq_dev_short.csv")
+
+    # last
+    question_dev_dataframe = load_csv("/proj/epiqa/EPiQ-A/data/natural_questions_train.csv")
 
     question_dev_dataframe["Question Context"] = 0
     question_dev_dataframe["Predicted Answer"] = 0
-    # last
-    # question_dev_dataframe = load_csv("/proj/mahoni/project/data/natural_questions_train.csv")
 
     print("Predicting answers...")
     for i, row in question_dev_dataframe.iterrows():
         questionContext = bm25.get_n_top_passages(n_passages, row["Question"])
         # print(type(questionContext), questionContext)
-        print(question_dev_dataframe.columns)
         question_dev_dataframe.at[i, question_dev_dataframe["Question Context"]] = questionContext
         question = row["Question"]
 
         predictedAnswer = answerExtracter.getAnswer(question, questionContext, model='distilbert')
         # print(type(predictedAnswer), predictedAnswer)
         question_dev_dataframe.at[i, "Predicted Answer"] = predictedAnswer
-
-    question_dev_dataframe.to_csv(f'./data/predicted_answers.csv', encoding='utf-8', index=False)
+    # Local
+    # question_dev_dataframe.to_csv(f'./data/predicted_answers.csv', encoding='utf-8', index=False)
+    # Last
+    question_dev_dataframe.to_csv(f'./predicted_answers.csv', encoding='utf-8', index=False)
     print(f'\nData frame written to predicted_answers.csv')
     end = time.time()
     print("\nRum time: ", end - start)

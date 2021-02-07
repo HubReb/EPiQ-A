@@ -2,6 +2,7 @@ import pandas as pd
 import csv
 import pickle
 import codecs
+import sys
 
 def load_csv(path: str):
     '''
@@ -31,6 +32,7 @@ def merge_train_dev_articles(path1, path2, path_out):
 
 
 def merge_csvs(path1, path2, out_path):
+    print('Merging training & dev set...')
     reader1 = csv.DictReader(open(path1))
     reader2 = csv.DictReader(open(path2))
     header = reader.fieldnames
@@ -38,6 +40,7 @@ def merge_csvs(path1, path2, out_path):
         writer = csv.DictWriter(csv_file, fieldnames=header)
         writer.writerows(reader1)
         writer.writerows(reader2)
+    print('Finished merging.')
 
 def load_from_pickle(filename):
     with open(filename, "rb") as f:
@@ -45,6 +48,19 @@ def load_from_pickle(filename):
 
 #### WORKING ON IT
 def csv_to_list_of_passages(path):
+    # To escape _csv.Error: field larger than field limit (131072)
+    maxInt = sys.maxsize
+    while True:
+        # decrease the maxInt value by factor 10
+        # as long as the OverflowError occurs.
+        try:
+            csv.field_size_limit(maxInt)
+            break
+        except OverflowError:
+            maxInt = int(maxInt / 10)
+            csv.field_size_limit(maxInt)
+
+    # Start to split into passages
     all_passages = []
     articles = ''
     with open(path, 'rb') as fr: #, newline=''

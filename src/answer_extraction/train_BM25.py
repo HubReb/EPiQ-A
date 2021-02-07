@@ -17,4 +17,9 @@ def train(datapath):
     print("Training completed. Model has been saved as trained_bm25.pkl \nRum time: ", end - start)
 
 if __name__ == "__main__":
-    train('./data/processed_article_corpus.csv')
+
+    # Local
+    # train('./data/processed_article_corpus.csv')
+
+    # Last
+    train('./processed_merged_wiki_text.csv')

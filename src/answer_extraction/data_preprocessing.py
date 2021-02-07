@@ -12,7 +12,12 @@ class Data():
     def __init__(self, dataframe, model='en_core_web_sm'):
         # catch error if spaCy model is not available, installs it and restarts the script
         self.df = dataframe
-        self.fp = f'./data/processed_article_corpus.csv'
+
+        # Local
+        # self.fp = f'./data/processed_article_corpus.csv'
+        # Last
+        self.fp = f'./processed_merged_wiki_text.csv'
+
         try:
             self.nlp = spacy.load(model)
         except OSError:
@@ -72,7 +77,7 @@ class Data():
         :Keyword Argument lowercase: if Ture => lowercasing text (default: {True})
         :return str: text with emojis removed
         """
-        tqdm.pandas(desc='Processing data', ncols=100)
+        tqdm.pandas(desc='Processing data', ncols=1000)
 
         if lowercase:
             self.df['Text_Proc'] = self.df['Text'].str.lower()
@@ -96,17 +101,23 @@ class Data():
 
 if __name__ == '__main__':
     # Local
-    train_wiki_text_file = "./data/nq_train_wiki_text_short.csv"
-    dev_wiki_text_file = "./data/nq_dev_wiki_text_short.csv"
+    # train_wiki_text_file = "./data/nq_train_wiki_text_short.csv"
+    # dev_wiki_text_file = "./data/nq_dev_wiki_text_short.csv"
+    # merged_path = f'./data/nq_merged_wiki_text.csv'
 
     # Last:
     # train_wiki_text_file = "/proj/mahoni/project/data/nq_train_wiki_text.csv"
     # dev_wiki_text_file = "/proj/mahoni/project/data/nq_dev_wiki_text.csv"
+    # merged_path = f'./nq_merged_wiki_text.csv'
+    # merge_train_dev_articles(train_wiki_text_file, dev_wiki_text_file, merged_path)
 
-    merged_path = f'./data/nq_merged_wiki_text.csv'
-    merge_train_dev_articles(train_wiki_text_file, dev_wiki_text_file, merged_path)
+    # df_train_dev = load_csv(merged_path)
 
-    # ?? df_train_dev = load_csv("./data/nq_dev_train_wiki_text_merged_short.csv")
-    df_train_dev = load_csv(merged_path)
+
+    # Local
+    # df_train_dev = load_csv("./data/nq_dev_train_wiki_text_merged_short.csv")
+    # Last
+    df_train_dev = load_csv("/proj/epiqa/EPiQ-A/data/article_retrieval/nq_dev_train_wiki_text_merged.csv")
+
     preprocess_corpus = Data(df_train_dev)
     preprocess_corpus.main()
