@@ -6,3 +6,5 @@
 
 DATAPATH = "../../data/"
 DATAPATH_PROCESSED = "../../data/article_retrieval"
+BM25_MODEL = "article_retrieval/okapibm25.pkl"
+TFIDF_MODEL = "article_retrieval/tfidfmodel.pkl"

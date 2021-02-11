@@ -197,6 +197,7 @@ class Okapi25:
             query = " ".join(query)
         else:
             query = " ".join(query.terms)
-        scores_index_tuples = [(index, self.model.get_score(query, index)) for index in docs]
+        doc_indices = []
+        scores_index_tuples = [(index, self.model.get_score(query, index)) for index in doc_indices]
         ranked_scores = sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)
-        return [self.index2wikiid[str(score_tuple[0])] for score_tuple in ranked_scores]
+        return [link for score_tuple in ranked_scores for link in self.index2wikiid[str(score_tuple[0])]]

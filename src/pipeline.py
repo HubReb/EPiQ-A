@@ -5,26 +5,27 @@ from article_retrieval.evaluate_baseline import load_utilities_for_bm, load_util
 from article_retrieval import gensim_bm25
 from article_retrieval.gensim_bm25 import Okapi25
 from article_retrieval.query_index import query_index
+from article_retrieval.config import BM25_MODEL, TFIDF_MODEL
 
-from anwser_extraction.Reader import AnswerExtracter
+from answer_extraction.Reader import AnswerExtracter
 
 
 class CombinedModel:
-    def __init__(self, article_retrieval_model: str, dataset: str):
+    def __init__(self, article_retrieval_model: str, dataset: str, model_filename: str):
         self.question_parser = parse_question
         self.dataset = pd.read_csv(dataset)
 
         if article_retrieval_model == "bm":
             bm_model, bm_inverted_index = load_utilities_for_bm(
-                "article_retrieval/okapibm25.pkl",
-                "/home/rebekka/Studium/master/ITA/project/EPiQ-A/src/article_retrieval/inverted_index.json"
+                model_filename,
+                "article_retrieval/inverted_index.json"
             )
             self.article_model = bm_model
             self.inverted_index = bm_inverted_index
         elif article_retrieval_model == "tfidf":
             tfidf_model, tfidf_inverted_index = load_utilities_for_tfidf(
-                    "article_retrieval/tfidfmodel.pkl",
-                    "/home/rebekka/Studium/master/ITA/project/EPiQ-A/src/article_retrieval/inverted_index.json"
+                    model_filename,
+                    "article_retrieval/inverted_index.json"
             )
             self.article_model = tfidf_model
             self.inverted_index = tfidf_inverted_index
@@ -50,9 +51,11 @@ class CombinedModel:
             possible_ansers.append(answer)
 
         # Irgendein Code, um eine gute Answer zurückzugeben
-        raise NotImplementedError
+        # raise NotImplementedError
 
 
 if __name__ == "__main__":
-    model = CombinedModel("bm", "../data/nq_train_wiki_text.csv")
+    model = CombinedModel("tfidf", "../data/article_retrieval/nq_dev_train_wiki_text_merged.csv", TFIDF_MODEL)
+    model.get_answer("Who is George W. Bush?")
+    model = CombinedModel("bm", "../data/article_retrieval/nq_dev_train_wiki_text_merged.csv", BM25_MODEL)
     model.get_answer("Who is George W. Bush?")

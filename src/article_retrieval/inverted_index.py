@@ -35,7 +35,7 @@ def create_inverted_index(dataframe, model):
 
 if __name__ == "__main__":
     spacy_model = spacy.load('en_core_web_sm')
-    df = pd.read_csv(join(DATAPATH_PROCESSED, "nq_dev_train_wiki_text.csv"))
+    df = pd.read_csv(join(DATAPATH_PROCESSED, "nq_dev_train_wiki_text_merged.csv"))
     inverted_index, index2wikiid = create_inverted_index(df, spacy_model)
     save_index(inverted_index, filename="inverted_index.json")
     save_index(index2wikiid, filename="index2id.json")

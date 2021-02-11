@@ -105,7 +105,6 @@ class TFIDFmodel:
         content_matrix = []
         content_matrix, self.index2key = load_corpus(dataframe_filename)
         self.index2key = {key: links.split(" ") for key, links in self.index2key.items()}
-        self.key2index = {link: index for index, links in self.index2key.items() for link in links}
         # stop words are already removed
         self.vectorizer = TfidfVectorizer(min_df=5)  # default for now, fine-tune later
         self.vectorizer = self.vectorizer.fit(content_matrix)
@@ -116,7 +115,7 @@ class TFIDFmodel:
         self.svd_transformer.fit(self.doc_vecs)
         self.truncated_doc_vecs = self.svd_transformer.transform(self.doc_vecs)
 
-    def rank_docs(self, docs, query, evaluate_component=False):
+    def rank_docs(self, query, docs, evaluate_component=False):
         """
         Rank select documents to query with with cosine similarity of tf-idf values.
 
@@ -140,16 +139,12 @@ class TFIDFmodel:
         if evaluate_component:
             query = [" ".join(query)]
         else:
-            query = " ".join(query.terms)
+            query = [" ".join(query.terms)]
         query_vector = self.vectorizer.transform(query)
-        doc_indices = []
-        for doc in docs:
-            doc_indices.append(self.key2index[doc])
-        doc_indices = list(set(doc_indices))
-        cosine_similarities = linear_kernel(query_vector, self.doc_vecs[doc_indices])
+        cosine_similarities = linear_kernel(query_vector, self.doc_vecs[docs])
         cosine_similarities = cosine_similarities.flatten()
         related_docs_indices = cosine_similarities.argsort()[::-1]
-        return [self.index2key[str(index)] for index in related_docs_indices]
+        return [link for index in related_docs_indices for link in self.index2key[str(index)]]
 
 
     def rank(self, query_tuple=None, query=None, evaluate_component=False, pca_approximation=True):
