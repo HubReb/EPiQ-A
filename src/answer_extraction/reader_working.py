@@ -4,7 +4,6 @@ import sys
 import time
 import pickle
 import numpy as np
-
 from tqdm import tqdm
 from answer_extraction.data_utils import load_csv
 from transformers import pipeline
@@ -16,7 +15,7 @@ class AnswerFromContext:
         self.model = pipeline("question-answering")
         self.n_top_paragraphs = 10
         self.max_context_size = 400
-    
+
     @staticmethod
     def prepare_bm25_model(articles):
         paragraphs = []
@@ -25,41 +24,40 @@ class AnswerFromContext:
                 paragraphs.append(paragraph.split())
         bm25 = BM25(paragraphs)
         return bm25
-    
+
     def get_best_paragraphs(self, question, articles):
         # Prepare paragraphs
         paragraphs = []
         for article in articles:
             for paragraph in article.split("\n\n"):
                 paragraphs.append(paragraph.split())
-        
+
         # Train temporary BM25 model on paragrpahs
         bm25 = BM25(paragraphs)
-        
+
         # Extract top-scoring paragraphs
         scores = bm25.get_scores(question.original_terms)
         top_scoring_paragraph_indices = np.argsort(scores)[::-1][:self.n_top_paragraphs]
         top_scoring_paragraphs = [paragraphs[index] for index in top_scoring_paragraph_indices]
-        
+
         return top_scoring_paragraphs
-    
+
     def get_answer(self, question, articles):
         print("Retrieving paragraphs")
         top_scoring_paragraphs = self.get_best_paragraphs(question, articles)
         question = " ".join(question.original_terms)
-        
+
         answers = []
         for i, paragraph in enumerate(top_scoring_paragraphs):
-            print("Processing paragraph {}/{}".format(i+1,len(top_scoring_paragraphs)), end='\r')
+            print("Processing paragraph {}/{}".format(i + 1, len(top_scoring_paragraphs)), end='\r')
             window_boundaries = list(range(0, len(paragraph), self.max_context_size)) + [len(paragraph)]
             for start, stop in zip(window_boundaries[:-1], window_boundaries[1:]):
-                window = paragraph[max(0, start-20): stop]
+                window = paragraph[max(0, start - 20): stop]
                 context = " ".join(window)
                 answer = self.model(question=question, context=context)
                 answers.append(answer)
-        
+
         return next(iter(sorted(answers, key=lambda a: a['score'], reverse=True)))['answer']
-        
 
 
 if __name__ == "__main__":
@@ -68,19 +66,22 @@ if __name__ == "__main__":
     # top n result of BM25
     n_passages = 3
 
+    print("Loading paragraphs")
     # Local
     # articles_csv_path = "./data/processed_article_corpus.csv"
-    # bm25 = Okapi_BM_25(articles_csv_path, bm25_model_filename="trained_bm25_2.pkl")
+
     # Last
-    print("Loading paragraphs")
-    articles_csv_path = "../../data/article_retrieval/nq_dev_train_wiki_text_merged.csv"
+    # - Not preprocessed
+    articles_csv_path = "../../build/data/article_retrieval/nq_dev_train_wiki_text_merged.csv"
+    # - Preprocessed
+    # articles_csv_path = "../../build/data/answer_extraction/processed_merged_wiki_text.csv"
     paragraphs = []
     csv.field_size_limit(sys.maxsize)
     with open(articles_csv_path) as af:
         for _, _, text in tqdm(csv.reader(af, delimiter=',')):
             for paragraph in text.split("\n\n"):
                 paragraphs.append(paragraph.split())
-    
+
     print("Loading BM25 model")
     if os.path.isfile("bm25_paragraph_model.pkl"):
         with open("bm25_paragraph_model.pkl", 'rb') as bm25_file:
@@ -90,33 +91,41 @@ if __name__ == "__main__":
         bm25 = BM25(paragraphs)
         with open("bm25_paragraph_model.pkl", 'wb') as bm25_file:
             pickle.dump(bm25, bm25_file)
-        
+
     print(bm25.average_idf)
     print("Loading pretrained Q/A model")
     answerExtracter = pipeline("question-answering")
 
     # Local
-    # question_dev_dataframe = load_csv("./data/nq_dev_short.csv")
+    # question_dataframe = load_csv("./data/nq_dev_short.csv")
     # Last
-    question_dev_dataframe = load_csv("../../data/natural_questions_train.csv")
+    question_dataframe = load_csv("../../build/data/natural_questions_train.csv")
 
-    question_dev_dataframe["Question Context"] = ''
-    question_dev_dataframe["Predicted Answer"] = ''
+    question_dataframe["Context"] = ''
+    question_dataframe["Predicted Answer"] = ''
 
     print("Predicting answers...")
-    for i, row in question_dev_dataframe.iterrows():
+    for i, row in question_dataframe.iterrows():
         question = row["Question"]
         scores = bm25.get_scores(question.split())
         top_scoring_paragraph_indices = np.argsort(scores)[::-1][:n_passages]
         top_scoring_paragraphs = [paragraphs[index][:150] for index in top_scoring_paragraph_indices]
         top_scoring_paragraphs = [" ".join(paragraph) for paragraph in top_scoring_paragraphs]
-        
+
         context = "\n\n".join(top_scoring_paragraphs)
         predictedAnswer = answerExtracter(question=question, context=context)
-    
+
+        question_dataframe.at[i, "Context"] = context
+        question_dataframe.at[i, "Predicted Answer"] = predictedAnswer['answer']
+
         print(question)
         print(predictedAnswer)
         print()
 
+    # Local
+    # question_dataframe.to_csv(f'./predicted_answers.csv', encoding='utf-8', index=False)
+    # Last
+    question_dataframe.to_csv(f'../../build/data/predicted_answers.csv', encoding='utf-8', index=False)
+    print('Predicted Answer saved to ../../build/data/predicted_answers.csv')
     end = time.time()
     print("\nRum time: ", end - start)
