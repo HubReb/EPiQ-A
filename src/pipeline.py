@@ -8,7 +8,7 @@ from article_retrieval.query_index import query_index
 from article_retrieval.article_index import ArticlesFromTitleMentions
 from article_retrieval.config import BM25_MODEL, TFIDF_MODEL
 
-# from answer_extraction.Reader import AnswerExtracter
+from answer_extraction.reader_working import AnswerFromContext
 
 
 class CombinedModel:
@@ -38,7 +38,7 @@ class CombinedModel:
         self.get_articles_from_titles = \
             self.get_articles_from_titles.get_articles_with_title_mentions
 
-        # self.answer_extraction_model = AnswerExtracter()
+        self.answer_extraction_model = AnswerFromContext()
 
 
     def get_answer(self, query: str):
@@ -47,15 +47,16 @@ class CombinedModel:
         ranked_ids = self.article_model.rank_docs(parsed_query, docs)
         ranked_ids.extend(self.get_articles_from_titles(parsed_query))
         ranked_ids = list(set(ranked_ids))
-        
-        print(parsed_query)
-        print(self.get_articles_from_titles(parsed_query))
 
         # get text from ids and keep ranking
-        top_paragraphs = []
+        top_articles = []
         for ranked_id in ranked_ids:
-            top_paragraphs.append(str(self.dataset[(self.dataset.Wikipedia_ID == ranked_id)]["Text"].values))
-        print(len(top_paragraphs))
+            top_articles.append(str(self.dataset[(self.dataset.Wikipedia_ID == ranked_id)]["Text"].values))
+        
+        answer = self.answer_extraction_model.get_answer(parsed_query, top_articles)
+        print("Question:", query)
+        print("Answer:", answer)
+        print()
 
         #possible_ansers = []
         #for context in top_paragraphs:

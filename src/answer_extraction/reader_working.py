@@ -6,9 +6,60 @@ import pickle
 import numpy as np
 
 from tqdm import tqdm
-from data_utils import load_csv
+from answer_extraction.data_utils import load_csv
 from transformers import pipeline
 from gensim.summarization.bm25 import BM25
+
+
+class AnswerFromContext:
+    def __init__(self):
+        self.model = pipeline("question-answering")
+        self.n_top_paragraphs = 10
+        self.max_context_size = 400
+    
+    @staticmethod
+    def prepare_bm25_model(articles):
+        paragraphs = []
+        for article in articles:
+            for paragraph in article.split("\n\n"):
+                paragraphs.append(paragraph.split())
+        bm25 = BM25(paragraphs)
+        return bm25
+    
+    def get_best_paragraphs(self, question, articles):
+        # Prepare paragraphs
+        paragraphs = []
+        for article in articles:
+            for paragraph in article.split("\n\n"):
+                paragraphs.append(paragraph.split())
+        
+        # Train temporary BM25 model on paragrpahs
+        bm25 = BM25(paragraphs)
+        
+        # Extract top-scoring paragraphs
+        scores = bm25.get_scores(question.original_terms)
+        top_scoring_paragraph_indices = np.argsort(scores)[::-1][:self.n_top_paragraphs]
+        top_scoring_paragraphs = [paragraphs[index] for index in top_scoring_paragraph_indices]
+        
+        return top_scoring_paragraphs
+    
+    def get_answer(self, question, articles):
+        print("Retrieving paragraphs")
+        top_scoring_paragraphs = self.get_best_paragraphs(question, articles)
+        question = " ".join(question.original_terms)
+        
+        answers = []
+        for i, paragraph in enumerate(top_scoring_paragraphs):
+            print("Processing paragraph {}/{}".format(i+1,len(top_scoring_paragraphs)), end='\r')
+            window_boundaries = list(range(0, len(paragraph), self.max_context_size)) + [len(paragraph)]
+            for start, stop in zip(window_boundaries[:-1], window_boundaries[1:]):
+                window = paragraph[max(0, start-20): stop]
+                context = " ".join(window)
+                answer = self.model(question=question, context=context)
+                answers.append(answer)
+        
+        return next(iter(sorted(answers, key=lambda a: a['score'], reverse=True)))['answer']
+        
 
 
 if __name__ == "__main__":
