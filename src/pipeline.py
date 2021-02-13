@@ -23,7 +23,7 @@ class CombinedModel:
         
         self.question_parser = parse_question
         
-        print("Loading dataset")
+        print("Loading articles")
         self.dataset = pd.read_csv(dataset)
         
         print("Loading article retrieval model")

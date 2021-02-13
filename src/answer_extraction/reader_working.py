@@ -74,7 +74,7 @@ class AnswerFromContext:
 
 
     def get_answer(self, question, articles=None):
-        print("Retrieving paragraphs")
+        # print("Retrieving paragraphs")
         if self.load_paragraphs:
             top_scoring_paragraphs = self.get_best_paragraphs_from_all_data(question)
         else:
@@ -84,7 +84,7 @@ class AnswerFromContext:
 
         answers = []
         for i, paragraph in enumerate(top_scoring_paragraphs):
-            print("Processing paragraph {}/{}".format(i + 1, len(top_scoring_paragraphs)), end='\r')
+            # print("Processing paragraph {}/{}".format(i + 1, len(top_scoring_paragraphs)), end='\r')
             window_boundaries = list(range(0, len(paragraph), self.max_context_size)) + [len(paragraph)]
             for start, stop in zip(window_boundaries[:-1], window_boundaries[1:]):
                 window = paragraph[max(0, start - 20): stop]
