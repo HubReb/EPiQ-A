@@ -34,7 +34,6 @@ def query_index(query, inverted_index, model, processing=False, must_have=None):
         model - ranking model for getting model's stop word list
         processing - boolean to determine if preprocessing is necessary
         must_have - list of terms that must be present in the document to be drawn from index
-        title_check - list of article ids whose article title contain words of the query
 
     Returns:
         best_doc_guesses - indices of documents that contain words of the query
@@ -46,10 +45,6 @@ def query_index(query, inverted_index, model, processing=False, must_have=None):
     stop_words = model.stop_words
     document_ids = defaultdict(list)
     if processing:
-        if title_check:
-            raise ValueError(
-                "title_check argument requires a named tuple of type Question!"
-            )
         query_tokens = query_processing(query, spacy.load('en_core_web_sm'), stop_words)
     else:
         query_tokens = query.terms
@@ -88,7 +83,7 @@ if __name__ == "__main__":
         )[:10]
     )
     parse = parse_question("Who was George Bush?", include_hyponyms=True, include_hypernyms=True)
-    docs, query = query_index(parse, index, tfidf_model, title_check=True)
+    docs, query = query_index(parse, index, tfidf_model)
     print(
         tfidf_model.rank_docs(
             docs,
