@@ -164,7 +164,7 @@ class Okapi25:
         ranked_scores = sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)
         return [self.index2wikiid[str(score_tuple[0])] for score_tuple in ranked_scores]
 
-    def rank_docs(self, query, docs, evaluate_component=False):
+    def rank_docs(self, query, docs, evaluate_component=False, max_docs: int=10):
         """
         Rank a subset of the docs in self.doc_freqs against a query.
 
@@ -179,6 +179,7 @@ class Okapi25:
             query - processed query, either a tokenized list or a named tuple (Question)
             docs - indices of documents to calculate score for
             evaluate_component (default: False) - boolean to determine which query format is given
+            max_docs (default: 10) - maximum number of (merged) articles to return
 
         Returns:
             A list of wikipedia article identifiers, sorted in decreasing
@@ -197,7 +198,6 @@ class Okapi25:
             query = " ".join(query)
         else:
             query = " ".join(query.terms)
-        doc_indices = []
-        scores_index_tuples = [(index, self.model.get_score(query, index)) for index in doc_indices]
-        ranked_scores = sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)
-        return [link for score_tuple in ranked_scores for link in self.index2wikiid[str(score_tuple[0])]]
+        scores_index_tuples = [(index, self.model.get_score(query, index)) for index in docs]
+        ranked_scores = list(sorted(scores_index_tuples, key=lambda x: x[1], reverse=True))
+        return [link for score_tuple in ranked_scores[:max_docs] for link in self.index2wikiid[str(score_tuple[0])]]

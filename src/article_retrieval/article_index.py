@@ -3,6 +3,7 @@ if __name__ == '__main__':
     sys.path.append('..')
 
 import re
+import os
 import csv
 import sys
 import json
@@ -78,8 +79,7 @@ class ArticlesFromTitleMentions:
     Provides functionality to retrieve wikipedia articles whose titles
     are mentioned in the question.
     """
-    def __init__(self, filename: str = None, autosave: bool = True):
-        self.autosave = autosave
+    def __init__(self, filename: str = None):
         if filename.endswith('.json'):
             with open(filename) as saved_index:
                 self.title2link,  self.title_index = json.load(saved_index)
@@ -103,12 +103,15 @@ class ArticlesFromTitleMentions:
     def get_articles_with_title_mentions(self, question: Question) -> List[str]:
         """Get articles whose title is mentioned in the given question"""
         relevant_titles = set()
-        for term in question.terms:
+        for term in question.original_terms:
             relevant_titles.update(self.title_index.get(term, set()))
+            
+        links = []
+        for title in relevant_titles:
+            if self.match(question, title):
+                links.extend(self.title2link[title])
 
-        return [(title, self.title2link[title])
-                for title in relevant_titles
-                if self.match(question, title)]
+        return links
 
 
 if __name__ == '__main__':

@@ -20,7 +20,7 @@ def query_processing(query, model, stop_words):
     return [word.lemma_ for word in processed_query]
 
 
-def query_index(query, inverted_index, model, processing=False, must_have=None, title_check=False):
+def query_index(query, inverted_index, model, processing=False, must_have=None):
     """
     Retrieve doc indices relevant to query from inverted index
 
@@ -71,12 +71,7 @@ def query_index(query, inverted_index, model, processing=False, must_have=None, 
             [d_id for d_id in docs_to_query_words_counter.items()], key=lambda x: x[1], reverse=True
         )
     best_doc_guesses = [doc_id for doc_id, counter in best_counter_doc_guesses]
-    if title_check:
-        article_title_getter = ArticlesFromTitleMentions("article_title_index.json")
-        article_docs = article_title_getter.get_articles_with_title_mentions(query)
-        for doc in article_docs:
-            if doc not in best_doc_guesses:
-                best_doc_guesses.append(doc)
+
     return best_doc_guesses, query_tokens
 
 

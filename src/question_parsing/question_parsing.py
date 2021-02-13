@@ -335,6 +335,7 @@ def get_synonyms(
 def get_named_entities(question: SpacyQuestion) -> List[str]:
     return [str(ent).lower() for ent in question.ents]
 
+
 def get_pos_tags(question: SpacyQuestion) -> List[str]:
     return [str(token.pos_) for token in question]
 
@@ -389,10 +390,10 @@ def parse_question(
     synonym_method: str = "wordnet",
     include_hyponyms: bool = False,
     include_hypernyms: bool = False,
-    lemmatise: bool = False,
+    lemmatise: bool = True,
     stem: bool = False,
-    tolower: bool = False,
-    filter_stopwords: bool = False
+    tolower: bool = True,
+    filter_stopwords: bool = True
 ) -> Question:
     """
     Main method for parsing a question.

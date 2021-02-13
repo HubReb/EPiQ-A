@@ -115,7 +115,7 @@ class TFIDFmodel:
         self.svd_transformer.fit(self.doc_vecs)
         self.truncated_doc_vecs = self.svd_transformer.transform(self.doc_vecs)
 
-    def rank_docs(self, query, docs, evaluate_component=False):
+    def rank_docs(self, query, docs, evaluate_component=False, max_docs: int =10):
         """
         Rank select documents to query with with cosine similarity of tf-idf values.
 
@@ -125,6 +125,7 @@ class TFIDFmodel:
             docs - list of indices in dataset
             evaluate_component (default: False) - boolean value determining if
                 the evaluation setup is executed
+            max_docs (default: 10) - maximum number of (merged) articles to return
         Returns:
             ranked list of wikipedia article identifiers corresponding to the indices
             given by docs
@@ -143,7 +144,8 @@ class TFIDFmodel:
         query_vector = self.vectorizer.transform(query)
         cosine_similarities = linear_kernel(query_vector, self.doc_vecs[docs])
         cosine_similarities = cosine_similarities.flatten()
-        related_docs_indices = cosine_similarities.argsort()[::-1]
+        related_docs_indices = cosine_similarities.argsort()[::-1][:max_docs]
+
         return [link for index in related_docs_indices for link in self.index2key[str(index)]]
 
 
