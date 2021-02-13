@@ -10,28 +10,51 @@ from answer_extraction.data_utils import load_csv
 from transformers import pipeline
 from gensim.summarization.bm25 import BM25
 
+ARTICLESPATH = "../data/article_retrieval/nq_dev_train_wiki_text_merged.csv"
+B25MODELFILE = "answer_extraction_bm25_paragraph_model.pkl"
+
 
 class AnswerFromContext:
-    def __init__(self):
+    def __init__(self, load_paragraphs):
         self.model = pipeline("question-answering")
         self.n_top_paragraphs = 10
         self.max_context_size = 400
+        
+        self.load_paragraphs = load_paragraphs
+        if load_paragraphs:
+            print("Working without retrieved articles -- load data")
+            self.bm25, self.paragraphs = self.load_data()
     
-    @staticmethod
-    def prepare_bm25_model(articles):
+    def load_data(self):
+        print("Answer extraction model - Loading paragraphs")
+        articles_csv_path = ARTICLESPATH
         paragraphs = []
-        for article in articles:
-            for paragraph in article.split("\n\n"):
-                paragraphs.append(paragraph.split())
-        bm25 = BM25(paragraphs)
-        return bm25
+        csv.field_size_limit(sys.maxsize)
+        
+        with open(articles_csv_path) as af:
+            for _, _, text in tqdm(csv.reader(af, delimiter=',')):
+                for paragraph in text.split("\n\n"):
+                    paragraphs.append(paragraph.split())
     
-    def get_best_paragraphs(self, question, articles):
+        print("Answer extraction model - Loading BM25 model")
+        if os.path.isfile(B25MODELFILE):
+            with open(B25MODELFILE, 'rb') as bm25_file:
+                bm25 = pickle.load(bm25_file)
+        else:
+            print("Training new model. This may take some time.")
+            bm25 = BM25(paragraphs)
+            with open(B25MODELFILE, 'wb') as bm25_file:
+                pickle.dump(bm25, bm25_file)
+        
+        return bm25, paragraphs
+
+
+    def get_best_paragraphs_from_articles(self, question, articles):
         # Prepare paragraphs
         paragraphs = []
         for article in articles:
             for paragraph in article.split("\n\n"):
-                paragraphs.append(paragraph.split())
+                paragraphs.append([token.strip().lower() for token in paragraph.split()])
         
         # Train temporary BM25 model on paragrpahs
         bm25 = BM25(paragraphs)
@@ -43,9 +66,21 @@ class AnswerFromContext:
         
         return top_scoring_paragraphs
     
-    def get_answer(self, question, articles):
+    def get_best_paragraphs_from_all_data(self, question):
+        scores = self.bm25.get_scores(question.original_terms)
+        top_scoring_paragraph_indices = np.argsort(scores)[::-1][:self.n_top_paragraphs]
+        top_scoring_paragraphs = [self.paragraphs[index] for index in top_scoring_paragraph_indices]
+        
+        return top_scoring_paragraphs
+
+
+    def get_answer(self, question, articles=None):
         print("Retrieving paragraphs")
-        top_scoring_paragraphs = self.get_best_paragraphs(question, articles)
+        if self.load_paragraphs:
+            top_scoring_paragraphs = self.get_best_paragraphs_from_all_data(question)
+        else:
+            top_scoring_paragraphs = self.get_best_paragraphs_from_articles(question, articles)
+        
         question = " ".join(question.original_terms)
         
         answers = []
@@ -59,7 +94,6 @@ class AnswerFromContext:
                 answers.append(answer)
         
         return next(iter(sorted(answers, key=lambda a: a['score'], reverse=True)))['answer']
-        
 
 
 if __name__ == "__main__":
