@@ -48,6 +48,7 @@ if __name__ == '__main__':
     sum_time = 0.0
     
     print("Starting evaluation")
+    print()
     for i, row in question_dev_dataframe.iterrows():
         starttime = time.time()
         question = row["Question"]
@@ -62,5 +63,6 @@ if __name__ == '__main__':
         sum_exact_match += exact_match(predicted_answer.split(), correct_answer.split())
         sum_time += (endtime - starttime)
         
-        print("Avg. Jaccard-Index: {:.2f}\tAvg. BLEU: {:.2f}\tAvg. WER: {:.2f}\tAvg. Exact Match:{:.2f}\tAvg. Time: {:.2f}"\
-            .format(sum_jaccard_index / (i+1), sum_bleu/(i+1), sum_wer/(i+1), sum_exact_match/(i+1), sum_time/(i+1)), end='\r')
+        print(" "*180, end='\r')
+        print("Avg. Jaccard-Index: {:.2f}\tAvg. BLEU: {:.2f}\tAvg. WER: {:.2f}\tAvg. Exact Match: {:.2f}\tAvg. Time/Question: {:.2f}s\tTotal questions: {}"\
+            .format(sum_jaccard_index / (i+1), sum_bleu/(i+1), sum_wer/(i+1), sum_exact_match/(i+1), sum_time/(i+1), i+1), end='\r')
