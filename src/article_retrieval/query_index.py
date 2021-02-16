@@ -7,7 +7,6 @@ import pickle
 
 import spacy
 
-from question_parsing.question_parsing import parse_question
 
 from article_retrieval.data_utils import read_index
 from article_retrieval.article_index import ArticlesFromTitleMentions
@@ -71,6 +70,7 @@ def query_index(query, inverted_index, model, processing=False, must_have=None):
 
 
 if __name__ == "__main__":
+    from question_parsing.question_parsing import parse_question
     index = read_index("inverted_index.json")
     with open("tfidfmodel.pkl", "rb") as f:
         tfidf_model = pickle.load(f)

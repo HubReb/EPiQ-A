@@ -70,21 +70,27 @@ def evaluate_models(question_file, model, rank_models):
     number_correct_bm = 0
     p_at_ks_tf = {}
     p_at_ks_bm = {}
+    r_at_k_tf = {}
+    r_at_k_bm = {}
     for i in range(2, 11):
-        p_at_ks_tf[i+1] = 0
-        p_at_ks_bm[i+1] = 0
+        p_at_ks_tf[i] = 0
+        p_at_ks_bm[i] = 0
+        r_at_k_bm[i] = 0
+        r_at_k_tf[i] = 0
     for idx, (query, correct_id) in enumerate(dataset):
         print("Evaluating query {}/{}".format(idx+1, len(dataset)), end='\r')
         reciprocal, correct, correct_rank = evaluate_okapi(query, correct_id, bm_model)
         for rank in p_at_ks_bm.keys():
             if rank >= correct_rank:
                 p_at_ks_bm[rank] += 1/rank
+                r_at_k_bm[rank] += 1
         sum_reciprocals_bm += reciprocal
         number_correct_bm += correct
         reciprocal, correct, correct_rank = evaluate_tf_idf(query, correct_id, tfidf_model)
         for rank in p_at_ks_tf.keys():
             if rank >= correct_rank:
                 p_at_ks_tf[rank] += 1/rank
+                r_at_k_tf[rank] += 1
         sum_reciprocals_tf += reciprocal
         number_correct_tf += correct
 
@@ -93,11 +99,12 @@ def evaluate_models(question_file, model, rank_models):
     print("number", number_of_queries, "sum_reciprocals_tf", sum_reciprocals_tf, "number_correct: ", number_correct_tf)
     for rank, n_correct in p_at_ks_bm.items():
         p_at_ks_bm[rank] = n_correct/number_of_queries
-    for rank, n_correct in p_at_ks_tf.items():
+        r_at_k_bm[rank] = r_at_k_bm[rank]/number_of_queries
         p_at_ks_tf[rank] = n_correct/number_of_queries
+        r_at_k_tf[rank] = r_at_k_tf[rank]/number_of_queries
     return (
-        (1/number_of_queries * sum_reciprocals_bm, number_correct_bm/number_of_queries, p_at_ks_bm),
-        (1/number_of_queries * sum_reciprocals_tf, number_correct_tf/number_of_queries, p_at_ks_tf)
+        (1/number_of_queries * sum_reciprocals_bm, number_correct_bm/number_of_queries, p_at_ks_bm, r_at_k_bm),
+        (1/number_of_queries * sum_reciprocals_tf, number_correct_tf/number_of_queries, p_at_ks_tf, r_at_k_tf)
     )
 
 
@@ -146,25 +153,41 @@ def evaluate(datapath):
     tfidf_model, inverted_index = load_utilities_for_tfidf()
     query_models = [bm_model, tfidf_model]
     # dev set
-    (bm_mmr, bm_pr_k, bm_p_ks), (tf_mmr, tf_pr_k, tf_pks) = evaluate_models(join(datapath, "nq_dev.csv"), model, query_models)
+    (bm_mmr, bm_pr_k, bm_p_ks, bm_r_ks), (tf_mmr, tf_pr_k, tf_pks, tf_r_ks) = evaluate_models(join(datapath, "nq_dev.csv"), model, query_models)
     print("Okapi BM25 results on dev set:")
-    print(f"MMR: {bm_mmr}, Precision@1: {bm_pr_k}")
-    print("TFIDF with cosine similarity results on dev set:")
-    print(f"MMR: {tf_mmr}, Precision@1: {tf_pr_k}")
     print("Precision@k")
     for rank, p in bm_p_ks.items():
         print(f"k = {rank}: {p}")
+    print("Recall@k")
+    for rank, r in bm_r_ks.items():
+        print(f"k = {rank}: {r}")
+    print(f"MMR: {bm_mmr}, Precision@1: {bm_pr_k}")
+    print("TFIDF with cosine similarity results on dev set:")
+    print("Precision@k")
+    for rank, p in tf_pks.items():
+        print(f"k = {rank}: {p}")
+    print("Recall@k")
+    for rank, r in tf_r_ks.items():
+        print(f"k = {rank}: {r}")
+    print(f"MMR: {tf_mmr}, Precision@1: {tf_pr_k}")
     # see how good we are on the training set
-    (bm_mmr, bm_pr_k, bm_p_at_k), (tf_mmr, tf_pr_k, tf_p_at_k) = evaluate_models(join(datapath, "nq_train.csv"), model, query_models)
+    (bm_mmr, bm_pr_k, bm_p_at_k, bm_r_ks), (tf_mmr, tf_pr_k, tf_p_at_k, tf_r_ks) = evaluate_models(join(datapath, "nq_train.csv"), model, query_models)
     print("Okapi BM25 results on training set:")
+    print("Precision@k")
+    for rank, p in bm_p_ks.items():
+        print(f"k = {rank}: {p}")
+    print("Recall@k")
+    for rank, r in bm_r_ks.items():
+        print(f"k = {rank}: {r}")
     print(f"MMR: {bm_mmr}, Precision@1: {bm_pr_k}")
     print("TFIDF with cosine similarity results on training set:")
     print(f"MMR: {tf_mmr}, Precision@1: {tf_pr_k}")
-    for rank, p in bm_p_at_k.items():
-        print(f"k = {rank}: {p}")
+    print("Precision@k")
     for rank, p in tf_p_at_k.items():
         print(f"k = {rank}: {p}")
-    # TODO: Fine-tune models on development set
+    print("Recall@k")
+    for rank, r in tf_r_ks.items():
+        print(f"k = {rank}: {r}")
 
 
 def evaluate_test(datapath):
@@ -173,22 +196,36 @@ def evaluate_test(datapath):
     bm_model, inverted_index = load_utilities_for_bm()
     tfidf_model, inverted_index = load_utilities_for_tfidf()
     query_models = [bm_model, tfidf_model]
-    (bm_mmr, bm_pr_k, bm_p_ks), (tf_mmr, tf_pr_k, tf_pks) = evaluate_models(join(datapath, "natural_questions_dev.csv"), model, query_models)
+    (bm_mmr, bm_pr_k, bm_p_ks, bm_r_ks), (tf_mmr, tf_pr_k, tf_pks, tf_r_ks) = evaluate_models(join(datapath, "natural_questions_dev.csv"), model, query_models)
     print("Okapi BM25 results on dev set:")
-    print(f"MMR: {bm_mmr}, Precision@1: {bm_pr_k}")
-    print("TFIDF with cosine similarity results on dev set:")
-    print(f"MMR: {tf_mmr}, Precision@1: {tf_pr_k}")
     print("Precision@k")
     for rank, p in bm_p_ks.items():
         print(f"k = {rank}: {p}")
+    print("Recall@k")
+    for rank, r in bm_r_ks.items():
+        print(f"k = {rank}: {r}")
+    print(f"MMR: {bm_mmr}, Precision@1: {bm_pr_k}")
+    print("TFIDF with cosine similarity results on dev set:")
+    print("Precision@k")
     for rank, p in tf_pks.items():
         print(f"k = {rank}: {p}")
-    print("Okapi BM25 results on test set:")
-    print(f"MMR: {bm_mmr}, Precision@1: {bm_pr_k}")
-    print("TFIDF with cosine similarity results on test set:")
+    print("Recall@k")
+    for rank, r in tf_r_ks.items():
+        print(f"k = {rank}: {r}")
     print(f"MMR: {tf_mmr}, Precision@1: {tf_pr_k}")
 
 
 if __name__ == "__main__":
-    evaluate_test(DATAPATH)
-    evaluate(DATAPATH_PROCESSED)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+            "--all",
+            action="store_true",
+            default=False,
+            help="evaluate model on training and dev set"
+            )
+    args = parser.parse_args()
+    if args.all:
+        evaluate(DATAPATH_PROCESSED)
+    else:
+        evaluate_test(DATAPATH)
