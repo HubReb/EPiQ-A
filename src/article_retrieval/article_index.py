@@ -109,7 +109,7 @@ class ArticlesFromTitleMentions:
         links = []
         for title in relevant_titles:
             if self.match(question, title):
-                links.extend(self.title2link[title])
+                links.append(" ".join(self.title2link[title]))
 
         return links
 

@@ -146,7 +146,8 @@ class TFIDFmodel:
         cosine_similarities = cosine_similarities.flatten()
         related_docs_indices = cosine_similarities.argsort()[::-1][:max_docs]
 
-        return [link for index in related_docs_indices for link in self.index2key[str(index)]]
+        # return [link for index in related_docs_indices for link in self.index2key[str(index)]]
+        return [" ".join(self.index2key[str(index)]) for index in related_docs_indices]
 
 
     def rank(self, query_tuple=None, query=None, evaluate_component=False, pca_approximation=True):
