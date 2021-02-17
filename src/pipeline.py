@@ -48,7 +48,7 @@ class CombinedModel:
             self.get_articles_from_titles.get_articles_with_title_mentions
         
         print("Loading paragraph retrieval model")
-        self.paragraph_retrieval_model = GetBestParagraphs(level="sentence")
+        self.paragraph_retrieval_model = GetBestParagraphs(level="paragraph")
         self.paragraph_retrieval_model = \
             self.paragraph_retrieval_model.get_best_paragraphs
         
@@ -114,7 +114,7 @@ class CombinedModel:
 
 if __name__ == "__main__":
     model = CombinedModel("tfidf", "../data/article_retrieval/nq_dev_train_wiki_text_merged.csv",
-                          TFIDF_MODEL, article_retrieval_use_index=False, retrieve_articles=True)
+                          TFIDF_MODEL, article_retrieval_use_index=False, retrieve_articles=False)
     # model.get_answer("who had most wins in nfl")
     # print()
     # model = CombinedModel("bm", "../data/article_retrieval/nq_dev_train_wiki_text_merged.csv", BM25_MODEL)

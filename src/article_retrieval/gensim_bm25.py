@@ -200,4 +200,6 @@ class Okapi25:
             query = " ".join(query.terms)
         scores_index_tuples = [(index, self.model.get_score(query, index)) for index in docs]
         ranked_scores = list(sorted(scores_index_tuples, key=lambda x: x[1], reverse=True))
-        return [link for score_tuple in ranked_scores[:max_docs] for link in self.index2wikiid[str(score_tuple[0])]]
+        
+        return [" ".join(self.index2wikiid[str(score_tuple[0])]) for score_tuple in ranked_scores[:max_docs]]
+        # return [link for score_tuple in ranked_scores[:max_docs] for link in self.index2wikiid[str(score_tuple[0])]]
