@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import spacy
 import nltk
 import random
@@ -14,6 +16,7 @@ from nltk.corpus import stopwords
 # Global variables                                                           #
 ##############################################################################
 
+print("Initialising global variables for question parsing. This may take some time")
 QuestionFields = [
     "terms",             # Relevant tokens of the question
     "original_terms",    # The original terms (including stopwords)
@@ -31,8 +34,9 @@ SpacyQuestion = spacy.tokens.doc.Doc
 Token = spacy.tokens.token.Token
 Tokens = List[Union[Token, str]]
 
-SpacyWizard = spacy.load("en_core_web_sm")  # TODO: Change to larger model
-EmbeddingModel = gensim.load("glove-twitter-25")  # TODO: Change to larger
+SpacyWizard = spacy.load("en_core_web_sm")
+# EmbeddingModel = gensim.load("glove-wiki-gigaword-300")
+EmbeddingModel = gensim.load("glove-wiki-gigaword-50")
 Stemmer = nltk.stem.snowball.EnglishStemmer()
 WordNetLemmatiser = nltk.stem.WordNetLemmatizer()
 Stopwords = set(stopwords.words("english"))

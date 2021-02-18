@@ -1,6 +1,4 @@
-if __name__ == '__main__':
-    import sys
-    sys.path.append('..')
+# -*- coding: utf-8 -*-
 
 import re
 import os

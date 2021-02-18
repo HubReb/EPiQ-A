@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # The exponential input curve
 import os
 import csv

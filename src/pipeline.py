@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+import os
 from time import time
 from typing import List
 from transformers import pipeline
@@ -13,13 +16,33 @@ from question_parsing.question_parsing import parse_question, Question
 from article_retrieval.evaluate_baseline import load_utilities_for_tfidf
 
 
+def check_all_files_exist():
+    """Checks whether the data was successfully set up and models are trained"""
+    assert os.path.isfile("article_retrieval/inverted_index.json")
+    assert os.path.isfile("article_retrieval/article_title_index.json")
+    assert os.path.isfile("../data/article_retrieval/nq_dev_train_wiki_text_merged.csv")
+    assert os.path.isfile(BM25_MODEL)
+    assert os.path.isfile(TFIDF_MODEL)
+    
+    return None
+
+
 class CombinedModel:
-    def __init__(self, article_retrieval_model: str, dataset: str, model_filename: str,
+    def __init__(self,
+                 article_retrieval_model: str,
+                 model_filename: str,
                  article_retrieval_use_index: bool = True,
-                 retrieve_articles: bool = True):
+                 retrieve_articles: bool = True,
+                 num_articles: int = 10,
+                 answer_extraction_model_name: str = None,
+                 paragraph_level: str = "paragraph",
+                 n_top_paragraphs: int = 10,
+                 max_context_size: int = 400
+                 ):
+        check_all_files_exist()
         self.article_retrieval_use_index = article_retrieval_use_index
         self.retrieve_articles = retrieve_articles
-        self.max_articles = 10
+        self.max_articles = num_articles
         
         self.question_parser = parse_question
         
@@ -48,12 +71,15 @@ class CombinedModel:
             self.get_articles_from_titles.get_articles_with_title_mentions
         
         print("Loading paragraph retrieval model")
-        self.paragraph_retrieval_model = GetBestParagraphs(level="paragraph")
+        self.paragraph_retrieval_model = GetBestParagraphs(paragraph_level,
+                                                           n_top_paragraphs,
+                                                           max_context_size)
         self.paragraph_retrieval_model = \
             self.paragraph_retrieval_model.get_best_paragraphs
         
         print("Loading (pretrained) QAnon model")
-        self.answer_extraction_model = pipeline("question-answering")
+        self.answer_extraction_model = \
+            pipeline("question-answering", model=answer_extraction_model_name)
 
 
     def get_answer(self, query: str):
@@ -113,8 +139,7 @@ class CombinedModel:
 
 
 if __name__ == "__main__":
-    model = CombinedModel("tfidf", "../data/article_retrieval/nq_dev_train_wiki_text_merged.csv",
-                          TFIDF_MODEL, article_retrieval_use_index=False, retrieve_articles=False)
+    model = CombinedModel("tfidf", TFIDF_MODEL, article_retrieval_use_index=False, retrieve_articles=False)
     # model.get_answer("who had most wins in nfl")
     # print()
     # model = CombinedModel("bm", "../data/article_retrieval/nq_dev_train_wiki_text_merged.csv", BM25_MODEL)

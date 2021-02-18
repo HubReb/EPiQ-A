@@ -48,10 +48,8 @@ def f1(predicted, correct):
     return f1
 
 
-if __name__ == '__main__':
-    print("Loading model")
-    model = CombinedModel("tfidf", "../data/article_retrieval/nq_dev_train_wiki_text_merged.csv",
-                          TFIDF_MODEL, article_retrieval_use_index=True, retrieve_articles=True)
+def evaluate(model):
+    """Evaluation main"""
     # model.get_answer("who had most wins in nfl")
     # print()
     # model = CombinedModel("bm", "../data/article_retrieval/nq_dev_train_wiki_text_merged.csv", BM25_MODEL)
@@ -89,3 +87,9 @@ if __name__ == '__main__':
         print(" "*180, end='\r')
         print("Avg. Jaccard-Index: {:.2f}\tAvg. BLEU: {:.2f}\tAvg. WER: {:.2f}\tAvg. Exact Match: {:.2f}\tAvg. F1: {:.2f}\tAvg. Time/Question: {:.2f}s\tTotal questions: {}"\
             .format(sum_jaccard_index / (i+1), sum_bleu/(i+1), sum_wer/(i+1), sum_exact_match/(i+1), sum_f1/(i+1), sum_time/(i+1), i+1), end='\r')
+
+
+if __name__ == '__main__':
+    print("Loading model")
+    model = CombinedModel("tfidf", TFIDF_MODEL, article_retrieval_use_index=True, retrieve_articles=True)
+    evaluate(model)
