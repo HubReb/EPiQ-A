@@ -77,7 +77,7 @@ class CombinedModel:
         self.paragraph_retrieval_model = \
             self.paragraph_retrieval_model.get_best_paragraphs
         
-        print("Loading (pretrained) QAnon model")
+        print("Loading (pretrained) Q/A model")
         self.answer_extraction_model = \
             pipeline("question-answering", model=answer_extraction_model_name)
 

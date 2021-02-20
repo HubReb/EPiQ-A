@@ -76,16 +76,16 @@ parser.add_argument(
     default=None,
     help="Determines the transformers model to use for answer extraction",
 )
-parser.add_argument(
-    "--include_synonyms",
-    action="store_true",
-    default=False,
-    help="include synonyms of question words in query",
-)
+#parser.add_argument(
+    #"--include_synonyms",
+    #action="store_true",
+    #default=False,
+    #help="include synonyms of question words in query",
+#)
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    print("Loading model. We're here to serve your wishes in just 2 or 3 hours.")
+    print("Loading model: May take some time.")
     model = CombinedModel(
         article_retrieval_model=args.article_retrieval_model,
         model_filename=args.article_retrieval_model_filename,
@@ -96,16 +96,16 @@ if __name__ == "__main__":
         paragraph_level=args.paragraph_level,
         n_top_paragraphs=args.num_paragraphs,
         max_context_size=args.max_context_size,
-        include_synonyms=args.include_synonyms,
+        #include_synonyms=args.include_synonyms,
     )
     if args.mode == "interactive":
-        print("This is the interactive Q/A shell. How can I serve you today?")
+        print("\nThis is the interactive Q/A shell. You can type in your questions.")
         print()
-        print("If you want to leave me, type in `exit`\n")
+        print("To exit, type in `exit`\n")
         while True:
             question = input("What's your question?:> ")
             if question == "exit":
-                print("Shutdown. In Windows speed")
+                print("Shutdown.")
                 break
             starttime = time()
             answer = model.get_answer(question)
