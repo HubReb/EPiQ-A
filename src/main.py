@@ -76,12 +76,7 @@ parser.add_argument(
     default=None,
     help="Determines the transformers model to use for answer extraction",
 )
-#parser.add_argument(
-    #"--include_synonyms",
-    #action="store_true",
-    #default=False,
-    #help="include synonyms of question words in query",
-#)
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -96,7 +91,6 @@ if __name__ == "__main__":
         paragraph_level=args.paragraph_level,
         n_top_paragraphs=args.num_paragraphs,
         max_context_size=args.max_context_size,
-        #include_synonyms=args.include_synonyms,
     )
     if args.mode == "interactive":
         print("\nThis is the interactive Q/A shell. You can type in your questions.")
