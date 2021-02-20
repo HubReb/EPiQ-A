@@ -3,15 +3,15 @@
 
 """ Define model to rank documents relative to a query with cosine similarity of TFIDF vectors"""
 
+from typing import List, Union
+
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
-from sklearn import preprocessing
-from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.decomposition import TruncatedSVD as PCA
-import numpy as np
+from sklearn.decomposition import TruncatedSVD
 
 
+from question_parsing.question_parsing import Question
 from article_retrieval.data_utils import load_corpus
 
 
@@ -87,11 +87,11 @@ class TFIDFmodel:
         self.index2key = {}
         self.vectorizer = None
         self.svd_transformer = None
-        self.stop_words = spacy.load('en_core_web_sm').Defaults.stop_words
+        self.stop_words = spacy.load("en_core_web_sm").Defaults.stop_words
         self.doc_vecs = None
         self.truncated_doc_vecs = None
 
-    def create_tf_idf_vectors(self, dataframe_filename):
+    def create_tf_idf_vectors(self, dataframe_filename: str):
         """
         Create TFIDF vectors by fitting model to dataset.
 
@@ -104,18 +104,26 @@ class TFIDFmodel:
         """
         content_matrix = []
         content_matrix, self.index2key = load_corpus(dataframe_filename)
-        self.index2key = {key: links.split(" ") for key, links in self.index2key.items()}
+        self.index2key = {
+            key: links.split(" ") for key, links in self.index2key.items()
+        }
         # stop words are already removed
         self.vectorizer = TfidfVectorizer(min_df=5)  # default for now, fine-tune later
         self.vectorizer = self.vectorizer.fit(content_matrix)
         self.doc_vecs = self.vectorizer.transform(content_matrix)
-        
+
         # Create truncated document matrix
-        self.svd_transformer = PCA(n_components=512)
+        self.svd_transformer = TruncatedSVD(n_components=512)
         self.svd_transformer.fit(self.doc_vecs)
         self.truncated_doc_vecs = self.svd_transformer.transform(self.doc_vecs)
 
-    def rank_docs(self, query, docs, evaluate_component=False, max_docs: int =10):
+    def rank_docs(
+        self,
+        query: Union[Question, List[str]],
+        docs: List[int],
+        evaluate_component: bool = False,
+        max_docs: int = 10,
+    ):
         """
         Rank select documents to query with with cosine similarity of tf-idf values.
 
@@ -149,8 +157,13 @@ class TFIDFmodel:
         # return [link for index in related_docs_indices for link in self.index2key[str(index)]]
         return [" ".join(self.index2key[str(index)]) for index in related_docs_indices]
 
-
-    def rank(self, query_tuple=None, query=None, evaluate_component=False, pca_approximation=True):
+    def rank(
+        self,
+        query_tuple: Union[Question, None] = None,
+        query: List[str] = None,
+        evaluate_component: bool = False,
+        approximation: bool = True,
+    ):
         """Rank all documents to query with cosine similarity of tf-idf values
 
         Arguments:
@@ -162,7 +175,7 @@ class TFIDFmodel:
                  evaluate_component
             evaluate_component (default: False) - boolean value determining if
                 the evaluation setup is executed
-            pca_approximation (default: False) - boolean value determining if
+            approximation (default: False) - boolean value determining if
                 to use the truncated feature vectors instead of the full
                 tf-idf vectors
 
@@ -191,30 +204,36 @@ class TFIDFmodel:
 
         # Adapted from https://stackoverflow.com/questions/12118720/python-tf-idf-cosine-to-find-document-similarity
         query_vector = self.vectorizer.transform(query)
-        if pca_approximation:
+        if approximation:
             # First, we calculate the approximate similarities using
             # from the truncated document-term matrix (this is fast)
             truncated_query_vector = self.svd_transformer.transform(query_vector)
-            truncated_cosine_similarities = linear_kernel(truncated_query_vector, self.truncated_doc_vecs).flatten()
+            truncated_cosine_similarities = linear_kernel(
+                truncated_query_vector, self.truncated_doc_vecs
+            ).flatten()
             truncated_related_indices = truncated_cosine_similarities.argsort()[::-1]
-            
+
             # We extract the 1000 highest-scoring documents and calculate
             # similarities using the full tf-idf document-term matrix
             best_truncated_indices = truncated_related_indices[:1000]
-            cosine_similarities = linear_kernel(query_vector, self.doc_vecs[best_truncated_indices])
+            cosine_similarities = linear_kernel(
+                query_vector, self.doc_vecs[best_truncated_indices]
+            )
             cosine_similarities = cosine_similarities.flatten()
             related_docs_indices = cosine_similarities.argsort()[::-1]
-            
+
             # Finally we resubstitute the ordering of the 1000 highest-scoring
             # documents using truncated features by the ordering obtained by
             # using full tf-idf vectors.
             # Ordering for all other documents is unchanged
-            truncated_related_indices[:1000] = best_truncated_indices[related_docs_indices]
+            truncated_related_indices[:1000] = best_truncated_indices[
+                related_docs_indices
+            ]
             related_docs_indices = truncated_related_indices
         else:
             # If we don't want to use truncated features (slow), we compute
             # all similarities using the full tif-idf document-term matrix
             cosine_similarities = linear_kernel(query_vector, self.doc_vecs).flatten()
             related_docs_indices = cosine_similarities.argsort()[::-1]
-            
+
         return [self.index2key[str(index)] for index in related_docs_indices]

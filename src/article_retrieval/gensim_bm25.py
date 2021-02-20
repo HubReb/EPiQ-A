@@ -5,12 +5,13 @@
 
 import pickle
 from os.path import isfile
+from typing import List
 
 import spacy
 
 from gensim.summarization.bm25 import BM25
-#from rank_bm25 import BM25Okapi as BM25
-from article_retrieval.data_utils import load_corpus
+from article_retrieval.data_utils import load_corpus, load_from_pickle
+from question_parsing.question_parsing import Question
 
 
 class Okapi25:
@@ -81,9 +82,15 @@ class Okapi25:
 
             Raises:
             TypeError if query is tuple and evaluate_component is True
-        """
+    """
 
-    def __init__(self, k=1.5, b=0.75, epsilon=0.25, filename="okapibm25.pkl"):
+    def __init__(
+        self,
+        k: int = 1.5,
+        b: int = 0.75,
+        epsilon: int = 0.25,
+        filename: str = "okapibm25.pkl",
+    ):
         """
         Parameters:
             k: float
@@ -101,22 +108,24 @@ class Okapi25:
         self.b = b
         self.epsilon = epsilon
         self.index2wikiid = {}
-        self.stop_words = spacy.load('en_core_web_sm').Defaults.stop_words
+        self.stop_words = spacy.load("en_core_web_sm").Defaults.stop_words
         if isfile(filename):
-            self.model = self.load(filename)
+            self.model = load_from_pickle(filename)
 
-    def load(self, filename):
-        """Load a trained model from a pickle file."""
-        with open(filename, "rb") as f:
-            return pickle.load(f)
-
-    def fit(self, dataframe_filename):
+    def fit(self, dataframe_filename: str):
         """Fit gensim's BM25 model to data."""
         processed_corpus, self.index2wikiid = load_corpus(dataframe_filename)
-        self.index2wikiid = {key: links.split(" ") for key, links in self.index2wikiid.items()}
+        self.index2wikiid = {
+            key: links.split(" ") for key, links in self.index2wikiid.items()
+        }
         self.model = BM25(processed_corpus, self.k, self.b, self.epsilon)
 
-    def rank(self, query_tuple=None, query=None, evaluate_component=False):
+    def rank(
+        self,
+        query_tuple: Question = None,
+        query: List[str] = None,
+        evaluate_component: bool = False,
+    ):
         """
         Rank all documents in self.models.doc_freqs against a query.
 
@@ -164,7 +173,13 @@ class Okapi25:
         ranked_scores = sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)
         return [self.index2wikiid[str(score_tuple[0])] for score_tuple in ranked_scores]
 
-    def rank_docs(self, query, docs, evaluate_component=False, max_docs: int=10):
+    def rank_docs(
+        self,
+        query: List[str],
+        docs: List[int],
+        evaluate_component: bool = False,
+        max_docs: int = 10,
+    ):
         """
         Rank a subset of the docs in self.doc_freqs against a query.
 
@@ -198,8 +213,13 @@ class Okapi25:
             query = " ".join(query)
         else:
             query = " ".join(query.terms)
-        scores_index_tuples = [(index, self.model.get_score(query, index)) for index in docs]
-        ranked_scores = list(sorted(scores_index_tuples, key=lambda x: x[1], reverse=True))
-        
-        return [" ".join(self.index2wikiid[str(score_tuple[0])]) for score_tuple in ranked_scores[:max_docs]]
-        # return [link for score_tuple in ranked_scores[:max_docs] for link in self.index2wikiid[str(score_tuple[0])]]
+        scores_index_tuples = [
+            (index, self.model.get_score(query, index)) for index in docs
+        ]
+        ranked_scores = list(
+            sorted(scores_index_tuples, key=lambda x: x[1], reverse=True)
+        )
+        return [
+            " ".join(self.index2wikiid[str(score_tuple[0])])
+            for score_tuple in ranked_scores[:max_docs]
+        ]

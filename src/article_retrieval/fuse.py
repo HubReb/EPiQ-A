@@ -9,7 +9,8 @@ import pandas as pd
 from article_retrieval.config import DATAPATH, DATAPATH_PROCESSED
 
 
-def split(datapath, result_path):
+def split(datapath: str, result_path: str):
+    """ Fuse original training and dev set in one csv file """
     df1 = pd.read_csv(join(datapath, "nq_dev_wiki_text.csv"))
     df2 = pd.read_csv(join(datapath, "nq_train_wiki_text.csv"))
     df1 = pd.concat([df1, df2])
