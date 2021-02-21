@@ -4,6 +4,7 @@
 """ Define model to rank documents relative to a query with cosine similarity of TFIDF vectors"""
 
 from typing import List, Union
+from collections import namedtuple
 
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -11,7 +12,6 @@ from sklearn.metrics.pairwise import linear_kernel
 from sklearn.decomposition import TruncatedSVD
 
 
-from question_parsing.question_parsing import Question
 from article_retrieval.data_utils import load_corpus
 
 
@@ -119,7 +119,7 @@ class TFIDFmodel:
 
     def rank_docs(
         self,
-        query: Union[Question, List[str]],
+        query: Union[namedtuple, List[str]],
         docs: List[int],
         evaluate_component: bool = False,
         max_docs: int = 10,
@@ -159,7 +159,7 @@ class TFIDFmodel:
 
     def rank(
         self,
-        query_tuple: Union[Question, None] = None,
+        query_tuple: Union[namedtuple, None] = None,
         query: List[str] = None,
         evaluate_component: bool = False,
         approximation: bool = True,

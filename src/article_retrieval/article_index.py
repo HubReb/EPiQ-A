@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import re
-import os
 import csv
 import sys
 import json
 
 from nltk.corpus import stopwords
 from typing import List, Set, Dict
-from question_parsing.question_parsing import Question
+from collections import namedtuple
+
 from question_parsing.question_parsing import parse_question
 
 Stopwords = set(stopwords.words("english"))
@@ -92,13 +92,13 @@ class ArticlesFromTitleMentions:
 
 
     @staticmethod
-    def match(question: Question, title: str):
+    def match(question: namedtuple, title: str):
         """Check if title is mentioned in question"""
         # Check exact string match
         return title in " ".join(question.original_terms)
 
 
-    def get_articles_with_title_mentions(self, question: Question) -> List[str]:
+    def get_articles_with_title_mentions(self, question: namedtuple) -> List[str]:
         """Get articles whose title is mentioned in the given question"""
         relevant_titles = set()
         for term in question.original_terms:

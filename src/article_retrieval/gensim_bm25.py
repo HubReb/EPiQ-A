@@ -2,8 +2,7 @@
 
 """Train document ranking model with Okapi BM 25 weights."""
 
-
-import pickle
+from collections import namedtuple
 from os.path import isfile
 from typing import List
 
@@ -11,7 +10,6 @@ import spacy
 
 from gensim.summarization.bm25 import BM25
 from article_retrieval.data_utils import load_corpus, load_from_pickle
-from question_parsing.question_parsing import Question
 
 
 class Okapi25:
@@ -72,7 +70,7 @@ class Okapi25:
         rank_docs(self, query, docs, evaluate_component):
             Rank a subset of the docs in self.doc_freqs against a query.
 
-            query - processed query or named tuple of type Questio
+            query - processed query or named tuple of type Question
             docs - indices of documents to calculate score for
             evaluate_component (default: False) - boolean to determine if we are
                 only evaluating the retrieval component
@@ -122,7 +120,7 @@ class Okapi25:
 
     def rank(
         self,
-        query_tuple: Question = None,
+        query_tuple: namedtuple = None,
         query: List[str] = None,
         evaluate_component: bool = False,
     ) -> List[str]:
