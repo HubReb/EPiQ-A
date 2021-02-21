@@ -7,8 +7,8 @@ import os
 from time import time
 from typing import List
 from transformers import pipeline
-from evaluation import load_csv
-from answer_extraction.reader_working import GetBestParagraphs
+from helper_functions import load_csv
+from reader_working import GetBestParagraphs
 from article_retrieval.gensim_bm25 import Okapi25
 from article_retrieval.query_index import query_index
 from article_retrieval.config import (
@@ -22,7 +22,7 @@ from article_retrieval.data_utils import (
     load_utilities_for_tfidf
 )
 from article_retrieval.article_index import ArticlesFromTitleMentions
-from question_parsing.question_parsing import parse_question, Question
+from question_parsing import parse_question, Question
 
 
 def check_all_files_exist():

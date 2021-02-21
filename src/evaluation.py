@@ -1,54 +1,22 @@
+#!/usr/bin/env python3
+
+
+""" Evaluate complete pipeline end to end """
+
 import time
-import sacrebleu
-import editdistance
-from collections import Counter
 
 from pipeline import CombinedModel
 from article_retrieval.config import BM25_MODEL, TFIDF_MODEL
-import pandas as pd
 
-def load_csv(path: str):
-
-    return pd.read_csv(path)
-
-def normalize(text):
-
-    return text.lower()
-
-
-def jaccard_index(predicted, correct):
-    predicted, correct = set(predicted), set(correct)
-    union = len(set.union(predicted, correct))
-    intersection = len(set.intersection(predicted, correct))
-
-    return intersection / union
-
-
-def bleu(predicted, correct):
-    return sacrebleu.sentence_bleu(predicted, [correct]).score
-
-
-def word_error_rate(predicted, correct):
-    error_rate = editdistance.eval(predicted, correct)
-    error_rate /= len(correct)
-    return error_rate
-
-
-def exact_match(predicted, correct):
-    return float(int(predicted == correct))
-
-
-def f1(predicted, correct):
-    common_tokens = Counter(predicted) & Counter(correct)
-    count_common = sum(common_tokens.values())
-    if not count_common:
-        f1 = 0.0
-    else:
-        precision = 1.0 * count_common / len(predicted)
-        recall = 1.0 * count_common / len(correct)
-        f1 = (2 * precision * recall) / (precision + recall)
-
-    return f1
+from helper_functions import (
+        load_csv,
+        normalize,
+        jaccard_index,
+        bleu,
+        word_error_rate,
+        exact_match,
+        f1
+)
 
 
 def evaluate(model):
@@ -112,7 +80,7 @@ def evaluate(model):
 
 if __name__ == "__main__":
     print("Loading model")
-    model = CombinedModel(
+    test_model = CombinedModel(
         "tfidf", TFIDF_MODEL, article_retrieval_use_index=True, retrieve_articles=True
     )
-    evaluate(model)
+    evaluate(test_model)
