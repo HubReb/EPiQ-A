@@ -9,7 +9,7 @@ from nltk.corpus import stopwords
 from typing import List, Set, Dict
 from collections import namedtuple
 
-from question_parsing.question_parsing import parse_question
+from question_parsing import parse_question
 
 Stopwords = set(stopwords.words("english"))
 

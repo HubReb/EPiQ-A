@@ -80,7 +80,7 @@ def query_index(
 
 
 if __name__ == "__main__":
-    from question_parsing.question_parsing import parse_question
+    from question_parsing import parse_question
 
     index = read_index("inverted_index.json")
     with open("tfidfmodel.pkl", "rb") as f:
