@@ -18,7 +18,7 @@ from article_retrieval.data_utils import load_utilities_for_bm, load_utilities_f
 
 def load_dataset(
     filename: str, model: spacy.language.Language
-) -> List[(List[str], int)]:
+):
     """Load dataset from csv file and process it with model.
 
     Arguments:
@@ -143,11 +143,17 @@ def evaluate_okapi(
     return reciprocal, rank
 
 
-def evaluate(datapath: str, only_test: bool = True):
+def evaluate(
+    datapath: str,
+    only_test: bool = True,
+    bm_model: str = "okapibm25.pkl",
+    tfidfmodel: str = "tfidfmodel.pkl",
+    index_file: str = "inverted_index.json",
+):
     """Run evaluation process on test set or test and training set if only_test == False"""
     model = spacy.load("en_core_web_sm")
-    bm_model, _ = load_utilities_for_bm()
-    tfidf_model, _ = load_utilities_for_tfidf()
+    bm_model, _ = load_utilities_for_bm(bm_model, index_file)
+    tfidf_model, _ = load_utilities_for_tfidf(tfidfmodel, index_file)
     query_models = [bm_model, tfidf_model]
     # dev set
     (bm_mmr, bm_p_ks, bm_r_ks), (

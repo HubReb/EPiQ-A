@@ -1,9 +1,19 @@
+#!/usr/bin/env python3 
+
+""" Glue script for pipeline, model/user interaction and evaluation cases """
+
 import argparse
 
 from time import time
 from evaluation import evaluate
 from pipeline import CombinedModel
-from article_retrieval.config import BM25_MODEL, TFIDF_MODEL
+from article_retrieval.config import (
+    BM25_MODEL,
+    TFIDF_MODEL,
+    PIPELINE_DATAPATH,
+    INVERTED_INDEX
+)
+from article_retrieval.evaluate_baseline import evaluate as evaluate_retrieval
 
 
 parser = argparse.ArgumentParser()
@@ -12,7 +22,7 @@ parser.add_argument(
     action="store",
     default="evaluate",
     type=str,
-    choices=["evaluate", "interactive"],
+    choices=["evaluate", "interactive", "evaluate_article_retrieval"],
     help="Determines the program you want to run",
 )
 parser.add_argument(
@@ -80,6 +90,9 @@ parser.add_argument(
 
 if __name__ == "__main__":
     args = parser.parse_args()
+    if args.mode == "evaluate_article_retrieval":
+        print("Starting article_retrieval evaluation...")
+        evaluate_retrieval(PIPELINE_DATAPATH, False, BM25_MODEL, TFIDF_MODEL, INVERTED_INDEX)
     print("Loading model: May take some time.")
     model = CombinedModel(
         article_retrieval_model=args.article_retrieval_model,
@@ -110,3 +123,4 @@ if __name__ == "__main__":
 
     elif args.mode == "evaluate":
         evaluate(model)
+
