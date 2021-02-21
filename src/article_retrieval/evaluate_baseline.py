@@ -40,7 +40,7 @@ def load_dataset(
 
 def evaluate_models(
     question_file: str,
-    model: spacy.language.Lookups,
+    model: spacy.language.Language,
     ranking_models: [Okapi25, TFIDFmodel],
 ) -> ((float, dict, dict), (float, dict, dict)):
     """
