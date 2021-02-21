@@ -1,25 +1,34 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
+
+""" Question answering pipeline class definition """
+
 import os
 from time import time
 from typing import List
 from transformers import pipeline
-from article_retrieval import gensim_bm25
 from answer_extraction.data_utils import load_csv
+from answer_extraction.reader_working import GetBestParagraphs
 from article_retrieval.gensim_bm25 import Okapi25
 from article_retrieval.query_index import query_index
-from article_retrieval.config import BM25_MODEL, TFIDF_MODEL
-from answer_extraction.reader_working import GetBestParagraphs
-from article_retrieval.evaluate_baseline import load_utilities_for_bm
+from article_retrieval.config import (
+    BM25_MODEL,
+    TFIDF_MODEL,
+    INVERTED_INDEX,
+    TITLE_INDEX
+)
+from article_retrieval.data_utils import (
+    load_utilities_for_bm,
+    load_utilities_for_tfidf
+)
 from article_retrieval.article_index import ArticlesFromTitleMentions
 from question_parsing.question_parsing import parse_question, Question
-from article_retrieval.evaluate_baseline import load_utilities_for_tfidf
 
 
 def check_all_files_exist():
     """Checks whether the data was successfully set up and models are trained"""
-    assert os.path.isfile("article_retrieval/inverted_index.json")
-    assert os.path.isfile("article_retrieval/article_title_index.json")
+    assert os.path.isfile(INVERTED_INDEX)
+    assert os.path.isfile(TITLE_INDEX)
     assert os.path.isfile("../data/article_retrieval/nq_dev_train_wiki_text_merged.csv")
     assert os.path.isfile(BM25_MODEL)
     assert os.path.isfile(TFIDF_MODEL)
@@ -28,6 +37,7 @@ def check_all_files_exist():
 
 
 class CombinedModel:
+    """ Pipeline of all modules of the question answering system for end-to-end usage """
     def __init__(
         self,
         article_retrieval_model: str,
@@ -85,6 +95,7 @@ class CombinedModel:
         )
 
     def get_answer(self, query: str):
+        """ Apply pipeline to a single query and return answer """
         parsed_query = self.question_parser(question=query)
         ranked_ids = None
 
@@ -97,6 +108,7 @@ class CombinedModel:
         return answer
 
     def get_ranked_article_ids(self, question: Question) -> List[str]:
+        """ Apply article_retrieval module to score and rank articles in regards to question."""
         if self.article_retrieval_use_index:
             docs, _ = query_index(question, self.inverted_index, self.article_model)
             ranked_ids = self.article_model.rank_docs(question, docs)
