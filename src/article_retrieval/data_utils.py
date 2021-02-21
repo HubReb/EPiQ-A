@@ -13,8 +13,6 @@ from typing import List, Union
 import pandas as pd
 import spacy
 
-from gensim_bm25 import Okapi25
-from tf_idfs import TFIDFmodel
 
 
 def read_index(filename: str):
@@ -31,7 +29,7 @@ def save_index(index: dict, filename: str = "inverted_index.json"):
 
 def load_utilities_for_bm(
     bm_file: str = "okapibm25.pkl", index_file: str = "inverted_index.json"
-) -> (Okapi25, dict):
+):
     """Load Okapi25 model and inverted index from their respective files."""
     bm25 = load_from_pickle(bm_file)
     inverted_index = read_index(index_file)
@@ -40,14 +38,14 @@ def load_utilities_for_bm(
 
 def load_utilities_for_tfidf(
     model_file: str = "tfidfmodel.pkl", index_file: str = "inverted_index.json"
-) -> (TFIDFmodel, dict):
+):
     """Load TFIDFmodel model and inverted index from their respective files."""
     tfidf_model = load_from_pickle(model_file)
     inverted_index = read_index(index_file)
     return tfidf_model, inverted_index
 
 
-def load_from_pickle(filename: str) -> Union[Okapi25, TFIDFmodel]:
+def load_from_pickle(filename: str):
     """Load model from pickled file."""
     with open(filename, "rb") as f:
         return pickle.load(f)
