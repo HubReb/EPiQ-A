@@ -8,7 +8,7 @@ from time import time
 from typing import List
 from transformers import pipeline
 from helper_functions import load_csv
-from reader_working import GetBestParagraphs
+from retrieve_paragraphs import GetBestParagraphs
 from article_retrieval.gensim_bm25 import Okapi25
 from article_retrieval.query_index import query_index
 from article_retrieval.config import (
