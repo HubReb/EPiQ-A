@@ -123,7 +123,7 @@ class TFIDFmodel:
         docs: List[int],
         evaluate_component: bool = False,
         max_docs: int = 10,
-    ):
+    ) -> List[str]:
         """
         Rank select documents to query with with cosine similarity of tf-idf values.
 
@@ -163,7 +163,7 @@ class TFIDFmodel:
         query: List[str] = None,
         evaluate_component: bool = False,
         approximation: bool = True,
-    ):
+    ) -> List[str]:
         """Rank all documents to query with cosine similarity of tf-idf values
 
         Arguments:

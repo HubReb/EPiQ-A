@@ -125,7 +125,7 @@ class Okapi25:
         query_tuple: Question = None,
         query: List[str] = None,
         evaluate_component: bool = False,
-    ):
+    ) -> List[str]:
         """
         Rank all documents in self.models.doc_freqs against a query.
 
@@ -179,7 +179,7 @@ class Okapi25:
         docs: List[int],
         evaluate_component: bool = False,
         max_docs: int = 10,
-    ):
+    ) -> List[str]:
         """
         Rank a subset of the docs in self.doc_freqs against a query.
 

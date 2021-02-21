@@ -15,7 +15,9 @@ from article_retrieval.tf_idfs import TFIDFmodel
 from article_retrieval.gensim_bm25 import Okapi25
 
 
-def query_processing(query: str, model: spacy.language.Language, stop_words: List[str]):
+def query_processing(
+    query: str, model: spacy.language.Language, stop_words: List[str]
+) -> List[str]:
     """ Remove stop words from query. tokenize and lemmatize it"""
     query = " ".join([word.lower() for word in query.split() if word not in stop_words])
     processed_query = model(query)
@@ -28,7 +30,7 @@ def query_index(
     model: Union[Okapi25, TFIDFmodel],
     processing: bool = False,
     must_have: bool = None,
-):
+) -> (List[int], List[str]):
     """
     Retrieve doc indices relevant to query from inverted index
 

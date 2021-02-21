@@ -12,7 +12,9 @@ from article_retrieval.data_utils import get_article_content, save_index
 from article_retrieval.config import DATAPATH_PROCESSED
 
 
-def create_inverted_index(dataframe: pd.DataFrame, model: spacy.language.Language):
+def create_inverted_index(
+    dataframe: pd.DataFrame, model: spacy.language.Language
+) -> (dict, dict):
     """ Create an invered index from a document collection."""
     inverted_index = defaultdict(set)
     stop_words = model.Defaults.stop_words

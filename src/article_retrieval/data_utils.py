@@ -8,11 +8,13 @@ import csv
 import pickle
 import re
 from os.path import isfile
-from typing import List
+from typing import List, Union
 
 import pandas as pd
 import spacy
-from tqdm import tqdm
+
+from gensim_bm25 import Okapi25
+from tf_idfs import TFIDFmodel
 
 
 def read_index(filename: str):
@@ -29,7 +31,7 @@ def save_index(index: dict, filename: str = "inverted_index.json"):
 
 def load_utilities_for_bm(
     bm_file: str = "okapibm25.pkl", index_file: str = "inverted_index.json"
-):
+) -> (Okapi25, dict):
     """Load Okapi25 model and inverted index from their respective files."""
     bm25 = load_from_pickle(bm_file)
     inverted_index = read_index(index_file)
@@ -38,20 +40,22 @@ def load_utilities_for_bm(
 
 def load_utilities_for_tfidf(
     model_file: str = "tfidfmodel.pkl", index_file: str = "inverted_index.json"
-):
+) -> (TFIDFmodel, dict):
     """Load TFIDFmodel model and inverted index from their respective files."""
     tfidf_model = load_from_pickle(model_file)
     inverted_index = read_index(index_file)
     return tfidf_model, inverted_index
 
 
-def load_from_pickle(filename: str):
-    """Load dataset from pickled file."""
+def load_from_pickle(filename: str) -> Union[Okapi25, TFIDFmodel]:
+    """Load model from pickled file."""
     with open(filename, "rb") as f:
         return pickle.load(f)
 
 
-def process_corpus(dataframe_filename: str, model: spacy.language.Language):
+def process_corpus(
+    dataframe_filename: str, model: spacy.language.Language
+) -> (List[List[str]], dict):
     """
     Process data, return corpus and id:wikipedia article identifier.
 
@@ -94,7 +98,7 @@ def process_corpus(dataframe_filename: str, model: spacy.language.Language):
 
 def lemmatize_sentence(
     sentence: str, model: spacy.language.Language, stop_words: List[str]
-):
+) -> List[str]:
     """Return lemmata of all words in sentence."""
     sentence = " ".join(
         [word.lower() for word in sentence.split() if word not in stop_words]
@@ -106,7 +110,7 @@ def lemmatize_sentence(
 
 def get_article_content(
     article: str, model: spacy.language.Language, stop_words: List[str]
-):
+) -> List[List[str]]:
     """Tokenize and lemmatize article."""
     article_paragraphs = article.split("\n\n")
     lemmatized_article = []
@@ -116,7 +120,7 @@ def get_article_content(
     return lemmatized_article
 
 
-def load_corpus(filename: str):
+def load_corpus(filename: str) -> (List[str], dict):
     """Load preprocessed corpus from file if it exists, else create it."""
     split_filename = filename.split(".csv")[0]
     if isfile(f"{split_filename}_lemmatized_stop_words_removed.csv"):
