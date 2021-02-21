@@ -18,7 +18,7 @@ def jaccard_index(predicted, correct):
     union = len(set.union(predicted, correct))
     intersection = len(set.intersection(predicted, correct))
 
-    return intersection/union
+    return intersection / union
 
 
 def bleu(predicted, correct):
@@ -56,7 +56,7 @@ def evaluate(model):
     # model.get_answer("who had most wins in nfl")
 
     print("Loading questions")
-    question_dev_dataframe = load_csv("../data/natural_questions_train.csv")
+    question_dev_dataframe = load_csv("../data/natural_questions_dev.csv")
 
     print("Predicting answers...")
 
@@ -77,19 +77,39 @@ def evaluate(model):
 
         correct_answer = row["Answer"]
 
-        sum_jaccard_index += jaccard_index(normalize(predicted_answer).split(), normalize(correct_answer).split())
+        sum_jaccard_index += jaccard_index(
+            normalize(predicted_answer).split(), normalize(correct_answer).split()
+        )
         sum_bleu += bleu(predicted_answer, correct_answer)
-        sum_wer += word_error_rate(normalize(predicted_answer).split(), normalize(correct_answer).split())
-        sum_exact_match += exact_match(normalize(predicted_answer).split(), normalize(correct_answer).split())
-        sum_f1 += f1(normalize(predicted_answer).split(), normalize(correct_answer).split())
-        sum_time += (endtime - starttime)
+        sum_wer += word_error_rate(
+            normalize(predicted_answer).split(), normalize(correct_answer).split()
+        )
+        sum_exact_match += exact_match(
+            normalize(predicted_answer).split(), normalize(correct_answer).split()
+        )
+        sum_f1 += f1(
+            normalize(predicted_answer).split(), normalize(correct_answer).split()
+        )
+        sum_time += endtime - starttime
 
-        print(" "*180, end='\r')
-        print("Avg. Jaccard-Index: {:.2f}\tAvg. BLEU: {:.2f}\tAvg. WER: {:.2f}\tAvg. Exact Match: {:.2f}\tAvg. F1: {:.2f}\tAvg. Time/Question: {:.2f}s\tTotal questions: {}"\
-            .format(sum_jaccard_index / (i+1), sum_bleu/(i+1), sum_wer/(i+1), sum_exact_match/(i+1), sum_f1/(i+1), sum_time/(i+1), i+1), end='\r')
+        print(" " * 180, end="\r")
+        print(
+            "Avg. Jaccard-Index: {:.2f}\tAvg. BLEU: {:.2f}\tAvg. WER: {:.2f}\tAvg. Exact Match: {:.2f}\tAvg. F1: {:.2f}\tAvg. Time/Question: {:.2f}s\tTotal questions: {}".format(
+                sum_jaccard_index / (i + 1),
+                sum_bleu / (i + 1),
+                sum_wer / (i + 1),
+                sum_exact_match / (i + 1),
+                sum_f1 / (i + 1),
+                sum_time / (i + 1),
+                i + 1,
+            ),
+            end="\r",
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Loading model")
-    model = CombinedModel("tfidf", TFIDF_MODEL, article_retrieval_use_index=True, retrieve_articles=True)
+    model = CombinedModel(
+        "tfidf", TFIDF_MODEL, article_retrieval_use_index=True, retrieve_articles=True
+    )
     evaluate(model)
