@@ -7,7 +7,7 @@ import os
 from time import time
 from typing import List
 from transformers import pipeline
-from answer_extraction.data_utils import load_csv
+from evaluation import load_csv
 from answer_extraction.reader_working import GetBestParagraphs
 from article_retrieval.gensim_bm25 import Okapi25
 from article_retrieval.query_index import query_index

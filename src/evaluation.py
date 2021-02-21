@@ -5,8 +5,11 @@ from collections import Counter
 
 from pipeline import CombinedModel
 from article_retrieval.config import BM25_MODEL, TFIDF_MODEL
-from answer_extraction.data_utils import load_csv
+import pandas as pd
 
+def load_csv(path: str):
+
+    return pd.read_csv(path)
 
 def normalize(text):
 
