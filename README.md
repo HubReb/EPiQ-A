@@ -17,6 +17,14 @@ All requirements are given in requirements.txt
 
 First install the requirements, change into the `src` folder  and then run `pip install . --editable` to continue development. Otherwise run `pip install .`
 
+## Usage Guide
+### Data Preparation & Model Training
+Please run `TODO.sh`. Data preparation may take up to ? hours.
+
+### Running Experiments
+ 1. Navigate into the `src/` folder
+ 2. Run `python main.py --mode evaluate`. Other options are `--mode interactive` for aksing your own questions and `--mode evaluate_article_retrieval` for evaluating only the article retrieval module.
+ 3. Our implementation supports multiple modes of retrieving relevant articles and paragraphs, as well as configuring many important parameters. Run `python main.py --help` for an overview.
 
 ## Project State
 
