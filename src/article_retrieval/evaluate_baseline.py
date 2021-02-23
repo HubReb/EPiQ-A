@@ -80,6 +80,7 @@ def evaluate_models(
         for rank in p_at_ks_bm.keys():
             if rank >= correct_rank:
                 p_at_ks_bm[rank] += 1 / rank
+                # total number of relevant documents is 1, so skipping /1
                 r_at_k_bm[rank] += 1
         sum_reciprocals_bm += reciprocal
         reciprocal, correct_rank = evaluate_tf_idf(query, correct_id, tfidf_model)
