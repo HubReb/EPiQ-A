@@ -160,7 +160,7 @@ def evaluate(
         tf_mmr,
         tf_pks,
         tf_r_ks,
-    ) = evaluate_models(join(datapath, "nq_dev.csv"), model, query_models)
+    ) = evaluate_models(join(datapath, "natural_questions_dev.csv"), model, query_models)
     print("Okapi BM25 results on test set:")
     print("Precision@k")
     for rank, p in bm_p_ks.items():
@@ -183,7 +183,7 @@ def evaluate(
             tf_mmr,
             tf_p_at_k,
             tf_r_ks,
-        ) = evaluate_models(join(datapath, "nq_train.csv"), model, query_models)
+        ) = evaluate_models(join(datapath, "natural_questions_train.csv"), model, query_models)
         print("Okapi BM25 results on training set:")
         print("Precision@k")
         for rank, p in bm_p_ks.items():
