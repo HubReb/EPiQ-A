@@ -8,11 +8,11 @@ from typing import List
 import spacy
 import pandas as pd
 
-from article_retrieval.query_index import query_index, query_processing
+from article_retrieval.query_index import query_processing
 from article_retrieval import gensim_bm25
 from article_retrieval.gensim_bm25 import Okapi25
 from article_retrieval.tf_idfs import TFIDFmodel
-from article_retrieval.config import DATAPATH_PROCESSED, DATAPATH
+from article_retrieval.config import DATAPATH
 from article_retrieval.data_utils import load_utilities_for_bm, load_utilities_for_tfidf
 
 

@@ -10,7 +10,6 @@ import spacy
 
 
 from article_retrieval.data_utils import read_index
-from article_retrieval.article_index import ArticlesFromTitleMentions
 from article_retrieval.tf_idfs import TFIDFmodel
 from article_retrieval.gensim_bm25 import Okapi25
 
@@ -18,7 +17,7 @@ from article_retrieval.gensim_bm25 import Okapi25
 def query_processing(
     query: str, model: spacy.language.Language, stop_words: List[str]
 ) -> List[str]:
-    """ Remove stop words from query. tokenize and lemmatize it"""
+    """ Remove stop words from query, tokenize and lemmatize it"""
     query = " ".join([word.lower() for word in query.split() if word not in stop_words])
     processed_query = model(query)
     return [word.lemma_ for word in processed_query]
@@ -46,7 +45,7 @@ def query_index(
         must_have - list of terms that must be present in the document to be drawn from index
 
     Returns:
-        best_doc_guesses - indices of documents that contain words of the query
+        best_doc_guesses - identifiers of documents that contain words of the query
         query - processed query
 
     Raises:

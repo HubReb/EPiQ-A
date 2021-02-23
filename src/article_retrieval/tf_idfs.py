@@ -17,13 +17,17 @@ from article_retrieval.data_utils import load_corpus
 
 class TFIDFmodel:
     """
-    A document ranker that utilizes cosine similarity between TF-IDF vectors.
+    A document ranker that utilizes cosine similarity between tf-idf vectors.
 
     The class uses sklearn.feature_extraction.text.TfidfVectorizer to create
-    TF-IDF vectors for each document in the dataset. The model can then be
-    used to rank either selected or all documents in the dataset against
-    a query via cosine similarity between document TFIDF vector and the
-    TFIDF vector of the query.
+    TF-IDF vectors for each document in the dataset. SVD is applied to the
+    vectors to reduce the vectors dimensions and thus improve ranking speed.
+    The model can then be used to rank either selected or all documents in
+    the dataset against a query via cosine similarity between document tf-idf
+    vector and the tf-idf vector. If specified, the  dimensionality reduced
+    tf-idf vectors are used intstead of the full vectors to improve ranking
+    speed. In this case, the tf-idf vector is also reduced in dimensionality
+    by applying SVD to the vector beforehand.
 
     Attributes:
         index2key: dictionary
@@ -32,29 +36,33 @@ class TFIDFmodel:
         doc_vecs:
             sparse matrix holding tf-idf feature vectors for all wikipedia
             articles
+        stop_words:
+            the words ignored in the creation of the tf-idf vectors (meant for
+            external usage)
         truncated_doc_vecs: np.ndarray
-            matrix holding feature vectors for all wikipedia articles
+            matrix holding feature vectors for all merged wikipedia articles
             obtained by factorising the tf-idf document-term matrix
             using SVD
         vectorizer: TfidfVectorizer
             sklearn.feature_extraction.text.TfidfVectorizer object used
-            to calculate TFIDF scores
+            to calculate tf-idf scores
         svd_transformer: TruncatedSVD
             sklearn.decomposition.TruncatedSVD object used to factorise the
             tf-idf document-term matrix
     Methods:
         create_tf_idf_vectors(self, dataframe_filename):
-            Create TFIDF vectors via sklearn's TfidfVectorizer on the
+            Create tf-idf vectors via sklearn's TfidfVectorizer on the
             dataset stored in the file give as dataframe_filename.
 
-            dataframe_filename - The name of the file the dataset is stored in.
+            Arguments:
+                dataframe_filename - The name of the file the dataset is stored in.
 
         rank_docs(self, query, docs, evaluate_component):
             Rank select documents to query with with cosine similarity of tf-idf values.
 
             Arguments:
                 query - processed query that must be lemmatized, tokenized and have had
-                    stop words removed or a named tuple of type Question
+                    stop words removed or be a named tuple (Question)
                 docs - list of indices in dataset
                 evaluate_component (default: False) - boolean value determining if
                     the evaluation setup is executed
@@ -66,7 +74,7 @@ class TFIDFmodel:
 
         rank(self, query_tuple, query, evaluate_component):
             Arguments:
-                query_tuple (default: None) - namedTuple of Question as defined by
+                query_tuple (default: None) - namedTuple (Question) as defined by
                     question_parsing component, cannot be combined with query or
                     evaluate_component flag
                 query (default: None) - processed query that must be lemmatized,
@@ -96,11 +104,13 @@ class TFIDFmodel:
         Create TFIDF vectors by fitting model to dataset.
 
         The dataset is loaded from dataframe_filename and the vectorizer
-        is trained on the dataset. After the training is complete the
-        method fills index2vector for faster access.
+        is trained on the dataset. TruncatedSVD is applied to create a matix of
+        smaller dimensions to improve calculation speed later on. After the
+        training is complete the method fills index2vector for faster access.
 
         Arguments:
-            dataframe_filename - The name of the file the dataset is stored in.
+            dataframe_filename - The name of the file the merged dataset is
+            stored in.
         """
         content_matrix = []
         content_matrix, self.index2key = load_corpus(dataframe_filename)
@@ -129,8 +139,8 @@ class TFIDFmodel:
 
         Arguments:
             query - processed query that must be lemmatized, tokenized and have had
-                stop words removed or a named tuple of type Question
-            docs - list of indices in dataset
+                stop words removed or a named tuple (Question)
+            docs - list of indices in merged dataset
             evaluate_component (default: False) - boolean value determining if
                 the evaluation setup is executed
             max_docs (default: 10) - maximum number of (merged) articles to return
@@ -154,7 +164,6 @@ class TFIDFmodel:
         cosine_similarities = cosine_similarities.flatten()
         related_docs_indices = cosine_similarities.argsort()[::-1][:max_docs]
 
-        # return [link for index in related_docs_indices for link in self.index2key[str(index)]]
         return [" ".join(self.index2key[str(index)]) for index in related_docs_indices]
 
     def rank(

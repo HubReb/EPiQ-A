@@ -18,7 +18,7 @@ class Okapi25:
     The class uses gensim.summarization.bm25 module to build the weights.
     Forther information on the BM 25 weighting process can be found in
     gensim's module information. Note that the class parameters are
-    given to gensim's module, here only a minimal documentation is provided
+    given to gensim's module. Here only a minimal documentation is provided
     as gensim's module documentation on them gives a thorough explanation.
     The default parameters are currently taken from gensim's documentation.
 
@@ -43,22 +43,26 @@ class Okapi25:
         load(self, filename)
             Load trained model from file.
 
-            filename: name of the file to load the model from
+            Arguments:
+                filename: name of the file to load the model from
             Returns:
                 loaded model
 
         fit(self, dataframe_filename):
             Fit gensim's BM25 model to data.
 
-            dataframe_filename - name of the csv file the dataset is stored in
+            Arguments:
+                dataframe_filename - name of the csv file the dataset containing
+                the merged articles is stored in
 
         rank(self, query_tuple, query, evaluate_component):
             Rank all documents in self.models.doc_freqs against a query.
 
-            query_tuple (default: None)- named tuple of type Question
-            query  (default: None)- processed query
-            evaluate_component (default: False)- boolean to determine if we are
-                only evaluating the retrieval component
+            Arguments:
+                query_tuple (default: None)- named tuple (Question)
+                query  (default: None)- processed query
+                evaluate_component (default: False)- boolean to determine if we are
+                    only evaluating the retrieval component
 
             Returns:
             ranked list of wikipedia article identifiers
@@ -67,19 +71,20 @@ class Okapi25:
                 TypeError if both query_tuple and query or evaluate_component are given
                 TypeError if neither query_tuple nor query and evaluate_component are given
 
-        rank_docs(self, query, docs, evaluate_component):
+        rank_docs(self, query, docs, evaluate_component, max_docs):
             Rank a subset of the docs in self.doc_freqs against a query.
-
-            query - processed query or named tuple of type Question
-            docs - indices of documents to calculate score for
-            evaluate_component (default: False) - boolean to determine if we are
-                only evaluating the retrieval component
+            Arguments:
+                query - processed query or named tuple (Question)
+                docs - indices of documents to calculate score for
+                evaluate_component (default: False) - boolean to determine if we are
+                    only evaluating the retrieval component
+                max_docs -(Default: 10) - the number determing the maximum number of merged articlese to return
 
             Returns:
-                ranked list of wikipedia article identifiers
+                A list of wikipedia article identifiers ranked in decreasing similarity to the query
 
             Raises:
-            TypeError if query is tuple and evaluate_component is True
+                TypeError if query is tuple and evaluate_component is True
     """
 
     def __init__(
@@ -131,7 +136,7 @@ class Okapi25:
         decreasing order against a query. The self.doc_freqs indices are mapped
         to the wikipedia article identifiers before the ranked list is returned.
         The query must either have already been tokenized, lemmatized and have had
-        its stop words removed be a namedTuple as created by the question_parsing.
+        its stop words removed or be a namedTuple as created by the question_parsing.
 
         Arguments:
             query_tuple (default: None) - namedTuple of Question as defined by
@@ -196,7 +201,7 @@ class Okapi25:
 
         Returns:
             A list of wikipedia article identifiers, sorted in decreasing
-            similarity.
+            similarity to the query
 
         Raises:
             TypeError if query is tuple and evaluate_component is True
