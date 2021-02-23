@@ -211,7 +211,8 @@ class TFIDFmodel:
         else:
             query = [" ".join(query_tuple.terms)]
 
-        # Adapted from https://stackoverflow.com/questions/12118720/python-tf-idf-cosine-to-find-document-similarity
+        # Adapted from
+        # https://stackoverflow.com/questions/12118720/python-tf-idf-cosine-to-find-document-similarity
         query_vector = self.vectorizer.transform(query)
         if approximation:
             # First, we calculate the approximate similarities using

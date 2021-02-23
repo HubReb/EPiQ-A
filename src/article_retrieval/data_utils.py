@@ -6,9 +6,8 @@
 import json
 import csv
 import pickle
-import re
 from os.path import isfile
-from typing import List, Union
+from typing import List
 
 import pandas as pd
 import spacy

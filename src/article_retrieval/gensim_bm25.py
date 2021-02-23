@@ -78,7 +78,8 @@ class Okapi25:
                 docs - indices of documents to calculate score for
                 evaluate_component (default: False) - boolean to determine if we are
                     only evaluating the retrieval component
-                max_docs -(Default: 10) - the number determing the maximum number of merged articlese to return
+                max_docs -(Default: 10) - the number determing the maximum number of merged
+                articles to return
 
             Returns:
                 A list of wikipedia article identifiers ranked in decreasing similarity to the query

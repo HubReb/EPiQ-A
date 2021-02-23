@@ -163,42 +163,42 @@ def evaluate(
     ) = evaluate_models(join(datapath, "natural_questions_dev.csv"), model, query_models)
     print("Okapi BM25 results on dev set:")
     print("Precision@k")
-    for rank, p in bm_p_ks.items():
-        print(f"k = {rank}: {p}")
+    for rank, precision_k in bm_p_ks.items():
+        print(f"k = {rank}: {precision_k}")
     print("Recall@k")
-    for rank, r in bm_r_ks.items():
-        print(f"k = {rank}: {r}")
+    for rank, recall_k in bm_r_ks.items():
+        print(f"k = {rank}: {recall_k}")
     print(f"MMR: {bm_mmr}")
     print("TFIDF with cosine similarity results on dev set:")
     print("Precision@k")
-    for rank, p in tf_pks.items():
-        print(f"k = {rank}: {p}")
+    for rank, precision_k in tf_pks.items():
+        print(f"k = {rank}: {precision_k}")
     print("Recall@k")
-    for rank, r in tf_r_ks.items():
-        print(f"k = {rank}: {r}")
+    for rank, recall_k in tf_r_ks.items():
+        print(f"k = {rank}: {recall_k}")
     print(f"MMR: {tf_mmr}")
     if not only_test:
         # see how good we are on the training set
-        (bm_mmr, bm_p_at_k, bm_r_ks), (
+        (bm_mmr, bm_p_at_ks, bm_r_ks), (
             tf_mmr,
             tf_p_at_k,
             tf_r_ks,
         ) = evaluate_models(join(datapath, "natural_questions_train.csv"), model, query_models)
         print("Okapi BM25 results on training set:")
         print("Precision@k")
-        for rank, p in bm_p_ks.items():
-            print(f"k = {rank}: {p}")
+        for rank, precision_k in bm_p_at_ks.items():
+            print(f"k = {rank}: {precision_k}")
         print("Recall@k")
-        for rank, r in bm_r_ks.items():
-            print(f"k = {rank}: {r}")
+        for rank, recall_k in bm_r_ks.items():
+            print(f"k = {rank}: {recall_k}")
         print(f"MMR: {bm_mmr}")
         print("TFIDF with cosine similarity results on training set:")
         print("Precision@k")
-        for rank, p in tf_p_at_k.items():
-            print(f"k = {rank}: {p}")
+        for rank, precision_k in tf_p_at_k.items():
+            print(f"k = {rank}: {precision_k}")
         print("Recall@k")
-        for rank, r in tf_r_ks.items():
-            print(f"k = {rank}: {r}")
+        for rank, recall_k in tf_r_ks.items():
+            print(f"k = {rank}: {recall_k}")
         print(f"MMR: {tf_mmr}")
 
 

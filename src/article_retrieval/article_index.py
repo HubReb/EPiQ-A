@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+""" Create invered index of Wikipedia article titles. """
+
 import re
 import csv
 import sys
 import json
-
-from nltk.corpus import stopwords
 from typing import List, Set, Dict
 from collections import namedtuple
+
+from nltk.corpus import stopwords
 
 from question_parsing import parse_question
 
@@ -38,9 +40,9 @@ def extract_titles(filename: str) -> Dict[str, str]:
     with open(filename) as wf:
         for _, link, text in csv.reader(wf):
             # Title is always in first line
-            title = text.split('\n')[0].strip().lower()
+            title = text.split("\n")[0].strip().lower()
             # Clean weird markup of the raw articles
-            title = re.sub('- wikipedia', '', title).strip()
+            title = re.sub("- wikipedia", "", title).strip()
             if not is_valid_title(title):
                 continue
             # Maybe some articles have the same title
@@ -67,7 +69,7 @@ def make_inverted_index(titles: List[str]) -> Dict[str, Set[str]]:
                 inverted_index[token].add(title)
             else:
                 inverted_index[token] = {title}
-    
+
     # Since we want to save the index, we need jsonable datatypes
     return {key: tuple(value) for key, value in inverted_index.items()}
 
@@ -77,19 +79,19 @@ class ArticlesFromTitleMentions:
     Provides functionality to retrieve wikipedia articles whose titles
     are mentioned in the question.
     """
+
     def __init__(self, filename: str = None):
-        if filename.endswith('.json'):
+        if filename.endswith(".json"):
             with open(filename) as saved_index:
-                self.title2link,  self.title_index = json.load(saved_index)
+                self.title2link, self.title_index = json.load(saved_index)
         else:
             self.title2link = extract_titles(filename)
             titles = list(self.title2link.keys())
             self.title_index = make_inverted_index(titles)
-    
-    def save(self, filename: str = "article_title_index.json"):
-        with open(filename, 'w') as sf:
-            json.dump((self.title2link, self.title_index), sf)
 
+    def save(self, filename: str = "article_title_index.json"):
+        with open(filename, "w") as sf:
+            json.dump((self.title2link, self.title_index), sf)
 
     @staticmethod
     def match(question: namedtuple, title: str):
@@ -97,13 +99,12 @@ class ArticlesFromTitleMentions:
         # Check exact string match
         return title in " ".join(question.original_terms)
 
-
     def get_articles_with_title_mentions(self, question: namedtuple) -> List[str]:
         """Get articles whose title is mentioned in the given question"""
         relevant_titles = set()
         for term in question.original_terms:
             relevant_titles.update(self.title_index.get(term, set()))
-            
+
         links = []
         for title in relevant_titles:
             if self.match(question, title):
@@ -112,13 +113,17 @@ class ArticlesFromTitleMentions:
         return links
 
 
-if __name__ == '__main__':
-    article_getter = ArticlesFromTitleMentions('../../data/article_retrieval/nq_dev_train_wiki_text.csv')
+if __name__ == "__main__":
+    article_getter = ArticlesFromTitleMentions(
+        "../../data/article_retrieval/nq_dev_train_wiki_text.csv"
+    )
     with open("../question_parsing/test_questions.txt") as tf:
         for line in tf:
-            question = line.strip()
-            parse = parse_question(question, include_hyponyms=True, include_hypernyms=True)
-            print(question)
+            test_question = line.strip()
+            parse = parse_question(
+                test_question
+            )
+            print(test_question)
             print(article_getter.get_articles_with_title_mentions(parse))
             print()
     article_getter.save()

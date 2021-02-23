@@ -89,5 +89,5 @@ if __name__ == "__main__":
     )
     print(tfidf_model.rank_docs(docs, example_query, evaluate_component=True)[:10])
     parse = parse_question("Who was George Bush?")
-    docs, query = query_index(parse, index, tfidf_model)
-    print(tfidf_model.rank_docs(docs, query, evaluate_component=True)[:10])
+    docs, parsed_query = query_index(parse, index, tfidf_model)
+    print(tfidf_model.rank_docs(docs, parsed_query, evaluate_component=True)[:10])
