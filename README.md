@@ -131,12 +131,16 @@ At the moment we test each pipeline independently in order to assure a level of 
 So far, we have evaluated the article retriever with the Okapi BM25 ranking model automatically. Because our dataset contains only one correct article, we focus on the rank the module assigns to the correct document: We calculate R-precision.
 Because our goal is for the one correct article to be ranked as high as possible we also compute Mean Reciprocal Rank (MMR).
 
-| Model       |      Metric |    Test |
-|-------------|------------:|--------:|
-| Opaki BM25  | R-precision |  0.0008 |
-| TF-IDF cos. | R-precision |  0.1769 |
-| Opkai BM25  |         MMR |  0.0017 |
-| TF-IDF cos. |         MMR |  0.2696 |
+| Model       |       Metric |   Test |
+|-------------|-------------:|-------:|
+| Okapi BM25  |  R-precision | 0.0034 |
+| TF-IDF cos. |  R-precision | 0.0034 |
+| Okapi BM25  |          MMR | 0.0069 |
+| TF-IDF cos. |          MMR | 0.3884 |
+| Okapi BM25  |    Recall@10 | 0.0116 |
+| TF-IDF cos. |    Recall@10 | 0.5781 |
+| Okapi BM25  | Precision@10 | 0.0012 |
+| TF-IDF cos. | Precision@10 | 0.0012 |
 
 These results show that we may easily improve upon our current method. As soon as we fine-tune the model, our results will improve to some extent. Note that though the TF-IDF weighting ranking method achieves far better results, it is more than 10x slower than the Opaki BM25 weighting ranking model.
 
