@@ -161,7 +161,7 @@ def evaluate(
         tf_pks,
         tf_r_ks,
     ) = evaluate_models(join(datapath, "natural_questions_dev.csv"), model, query_models)
-    print("Okapi BM25 results on test set:")
+    print("Okapi BM25 results on dev set:")
     print("Precision@k")
     for rank, p in bm_p_ks.items():
         print(f"k = {rank}: {p}")
@@ -214,6 +214,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     if args.all:
-        evaluate(DATAPATH_PROCESSED, True)
+        evaluate(DATAPATH, True)
     else:
         evaluate(DATAPATH)
