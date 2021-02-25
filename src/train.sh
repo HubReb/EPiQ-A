@@ -11,3 +11,4 @@ python merge_article_versions.py
 cd -
 echo "Training the models... This may take several minutes..."
 python train_models.py
+cd ..
