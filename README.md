@@ -7,129 +7,98 @@
 * Rebekka Hubert (hubert@cl.uni-heidelberg.de)
 
 ## Existing code
-Each pipeline step has its own README that states what pre-existing code/data was used.
+Pre-existing code is clearly marked in both the README and the scripts. Note that both the data generation and article retrieval have their own READMEs due to the complexity of these modules.
 
 ## Requirements
 
-All requirements are given in requirements.txt
+All requirements are given in requirements.txt.
 
 ## Installation
 
-First install the requirements, change into the `src` folder  and then run `pip install . --editable` to continue development. Otherwise run `pip install .`
+First install the requirements. This steps varies depending on your own python setup.
+
+### virtual environments 
+
+Run `pip install -r requirements.txt`
+
+### Anaconda
+
+Run ` conda install --file requirements.txt`.
+
+
+Then, change into the `src` folder  and run `pip install .`. If you intend to continue development, run `pip install . --editable` to avoid running `pip install .` after each change to the code.
 
 ## Usage Guide
-### Data Preparation & Model Training
-Please run `TODO.sh`. Data preparation may take up to ? hours.
+### Data Preparation
+
+The data preparation requires several manual steps, because the NaturalQuestions dataset requires you to log into your Google account to acquire it. Please change into the `src/data_generation` folder and follow the steps detailed in the README there to run the data preparation. 
+Note that the data preparation may take several hours  to complete and requires several GB of RAM.
+
+### Model Training
+ 
+All training steps are given in the `src/train.sh` bash script. Simply run `bash train.sh`. Note that this steps takes several hours to complete if you run it for the first time.
 
 ### Running Experiments
  1. Navigate into the `src/` folder
- 2. Run `python main.py --mode evaluate`. Other options are `--mode interactive` for aksing your own questions and `--mode evaluate_article_retrieval` for evaluating only the article retrieval module.
+ 2. Run `python main.py --mode evaluate`. Other options are `--mode interactive` for asking your own questions in an interactive shell and `--mode evaluate_article_retrieval` for evaluating only the article retrieval module.
  3. Our implementation supports multiple modes of retrieving relevant articles and paragraphs, as well as configuring many important parameters. Run `python main.py --help` for an overview.
 
-## Project State
+Note that, in total, our implementation requires ~30 GB of RAM to load all trained models and the data.
 
-### Planning State
 
-At this stage, the datasets have been preprocessed. We have also implemented the basic components of our application, though all can be further improved.
+## Future Planning
 
-In detail, this means that we can preprocess questions, extract named entities from questions and heuristically determine the question focus and synonyms to keywords in the question. Also we can build an inverted index from a collection of documents. By applying ranking mechanisms with regard to a question we can extract the documents from the collection most likely to contain the answer the question. Finally, we can extract the most relevant passages from the retrieved documents, extracting the best answer span from the relevant passages is still in progress.
-
-The interaction between the pipeline parts is still fragile at best and requires further improvement. Due to this, we have not yet started on our overall goal: The error-awareness. Furthermore, we have not evaluated the pipeline in total, but have taken a look at the performance of the singular components.
-
-### Future Planning
-
-Our next goals are to connect the components of the pipeline to enable a seamless, easy end-to-end usage as  advised by our mentor and to extract the best answer span form the most relevant passages. We believe this can be easily done before the new year starts.
-Then, we will address our main goal: The error-correction in the different components. We believe this will take the most of our remaining time.
-Finally, we may improve our different pipeline components by either adding more features or implementing less simple algorithms to improve our  results.
+At the moment our article retrieval steps serves to weaken our overall approach. For instance, the Recall@10 is only about 50\% and our Precision@k performance is disturbingly low. We believe that replacing our TF-IDf approach with a neural retrieval model would significantly improve this pipeline step's results and thus help us achieve better overall performance. 
+Another possible step would be to cut down on the number of retrieved articles. Right now, the user decides how many articles are retrieved and passed on to the next pipeline step with a default value of ten. It may be feasible to take a closer look at the scoring of the articles and discard all articles with a similarity value below a threshold. However, one would first need to think of an adequate way to determine the value of this threshold as most questions have a low similarity to all possible articles and hard-coding such a threshold would result in the module simply returning no articles at all.
 
 
 ### High-level Architecture Description:
-There are two parts to the project: Data preprocessing and the application pipeline. The pipeline is constructed of three different parts: The construction of the semantic representation of the query, the retrieval of articles that may contain the answer to the query and the extraction of the answer from the retrieved articles. Whereas the parsing of each question and the extraction of the corresponding answer are written in single scripts, the retrieval of the articles requires its own submodule  due to the different, interchangeable components in this step.
-In the following, we will describe each pipeline step in detail. Given a question, it is necessary to extract information needed for retrieving the answer. This includes primarily finding keywords, e.g. by tokenising, filtering stopwords, and optionally lemmatising.
+Our project requires 2 main parts: Data preprocessing and the question answering pipeline. The pipeline consists of 4 different parts: 
+ 1. Preprocessing the query
+ 2. retrieval of articles that may contain the answer to the query
+ 3. the retrieval of paragraphs therein
+ 4. eventually the extraction of the answer from the retrieved articles.
 
-Besides question keywords, recognising named entities is useful both for extracting answers and retrieving documents. Also, to deal with synonymy and sparsity (questions are generally short), we collect synonyms or closely related words to all keywords of the question.
+Retrieval of the articles requires its own submodule  due to the different, interchangeable components in this step. All other functionality is organised in single files in the `src`-folder.
 
-
-Previous work on question answering has shown that finding out the question type, e.g. whether the question asks for a definition, number, etc. can help identifying good answers. To this end, the main focus keyword of a question is extracted. For example, the focus keyword in "What is the longest river in Africa" is "river", because it directly specifies the expected answer, i.e. name of a river.
-
-Thus we describe this step now in more detail:
+In the following, we describe each pipeline step in detail.
 
 #### Question Processing
-The question processing component extracts all information needed for further processing from the question. A question is given as a string.
-The extracted information includes:
+The question processing component applies fundamental prepocessing to the given natural language question (represented as string). This includes tokenisation, and optionally stop-word-removal, lowercasing, and lemmatising or stemming. Lemmatising and stemming are mutually exclusive.
 
-  * Question keywords: Either all tokens or only non-stopword tokens
-  * POS-Tags of the retained tokens
-  * Synonyms or related words of all non-stopword tokens
-  * Named Entities
-  * Question focus: One or a few tokens that represent the main theme or actor of the question
-  * Question category using the taxonomy from [1] (not yet implemented)
+For tokenisation and lemmatising, we use the [spacy library](https://spacy.io/) [1]. For stop-word-removal and stemming, we use [NLTK](https://www.nltk.org/) [3].
 
 
-##### Tokenisation, POS tagging, NER
-Tokenisation, POS tagging, and NER are performed using the spacy library [2] ( https://spacy.io/ ). This information has proven useful and is thus included in the current version.
-
-##### Synonyms - deprecated due to failing to improve results
-Currently, two ways of extractiong synonyms are supported:
-
-  * Retrieving all lemmata from WordNet [3] synsets related to a token
-  * Retrieving a fixed number of closest tokens in a vector-space model
-
-For retrieving similar terms from a vector-space model, we use gensim [4] ( https://radimrehurek.com/gensim/ ). Gensim also provides pre-trained embedding models ( https://github.com/RaRe-Technologies/gensim-data ).
-
-In upcoming work, we would like to combine both WordNet and the vector space model, for example by ranking WordNet synonyms by similarity in the embedding space. Also, we plan to include Hyponyms and Hypernyms from WordNet.
-
-##### Question focus - deprecated due to yielding mostly wrong focuses
-The question focus is a span from the question (usually corresponding to 1 single noun or a multiword expression like compounds). The question focus indicates at the main theme or actor of the question. The question focus therefore hints at the expected answer. Previous work [5, 6, inter alios] has shown that determining the question focus improves question interpretation.
-
-For example, according to [5], the question focus in "What mystery writer penned '...the glory that was Greece, and the grandeur thatwas Rome'?" is "mystery writer", because this is the main characteristic of the expected answer.
-
-In previous work, the question focus is extracted from a constituent parse of the question using a set of rules, most notably the so-called "Collins rules" [7, 8]. As a baseline, we have implemented a different set of rules that operate on the constituency parse of the question. A constituency parse is also provided by gensim.
-
-First, we determine the root of the constituency parse. Then, the following rules are applied:
-
-  * If the root has a nominal subject as direct child which is not a question word, the nominal subject is returned.
-  * If the the root has a direct object as child which is not a question word, the direct object is returned.
-  * Otherwise, the leftmost noun in the question is returned.
-  * If the question does not contain nouns, the root is returned.
-
-Instead of returning only one token, we extract the whole noun phrase of the question focus. Of all tokens in the noun phrase, we only keep nouns, proper nouns, adjectives, and numbers. This helps with resolving parsing problems arising from multiword expressions and named entities.
-
-In upcoming work, we plan to improve handling of named entities, multiword expressions, and disfluencies. Optimally, we can manipulate the question string so that the quality of the constituent parses improve.
-
-##### Evaluation
-For evaluating synonym extraction and question focus identification, we currently use 100 questions from the Natural Questions dataset to conduct manual evaluations. For evaluating the question category classification, we use the test set from https://cogcomp.seas.upenn.edu/Data/QA/QC/ .
+#### Article Retrieval
 
 
-
-
-The article retrieval component works independently from this first step as this additional information is not required to extract the relevant articles. 
-Note that the natural questions dataset has new articles in the development set, which is our test set. We need to add these articles to our training set, otherwise we cannot retrieve the correct articles as they would be unknown.
-
-We first build an inverted index from the articles in the entire dataset: We lemmatize each tokenized word in the dataset. Then we remove stop words. The remaining words are used to build the index. Each word maps to a list of documents that contain this word.
+We first build an inverted index from the articles in the entire dataset: We lemmatise each tokenised word in the dataset. Then we remove stop words. The remaining words are used to build the index. Each word maps to a list of documents that contain this word.
 
 For querying the document collection, the words in the lemmatised query are mapped to the articles via the inverted index and the retrieved articles are ranked with respect to the query. Currently, we have two ranking, bag-of-words methods implemented: The TF-IDF Weighting introduced in the lecture with cosine similarity to the TF-IDF vector of the query for ranking and Okapi BM25. Note that our current implementation of TF-IDF uses [sklearns](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html) default parameters.
 For the Okapi BM25 we use the implementation provided by the python package [gensim](https://radimrehurek.com/gensim_3.8.3/summarization/bm25.html).
 Regardless of the chosen ranking model we pass the top ten ranked articles to the answer extraction component.
-All further detail is given in the submodules folder `article_retrieval`.
+All further detail is given in the sub-modules folder `article_retrieval`.
 
 
-There are two main tasks to extract accurate answers to questions in the retrieved articles: 1) retrieve informative/relevant paragraphs in the article, and 2) extract the answer from those paragraphs. 
+#### Paragraph retrieval
+To extract relevant paragraphs from the retrieved articles, we again use a BM25 model (gensim implementation). 
 
-To extract the relative paragraphs from the articles, we use BM25 (implemented by gensim). It takes a query and sorts the paragraphs based on how relevant they are for the query. Then the top N paragraphs will be extracted by BM25 and we will build a article out of all those top N paragraphs as the final informative answer containing context for the question.
+The model first maps retrieved articles to their paragraphs. The paragraphs are cached. Then, the BM25-model ranks these paragraphs according to the given query. We return the top ranked paragraphs. Because the pretrained answer extraction models (see below) can only handle contexts of limited length, we split each paragraph into (overlapping) context windows.
 
-For question answering, transformers provides models that are fine-tuned checkpoints of DistilBERT(a simpler and faster version of Google's BERT model which still keeps most of the original model performance) or BERT, they are fine-tuned using knowledge distillation on SQuAD v1.1. They are models with a span classification head on top for extractive question-answering tasks like SQuAD (a linear layers on top of the hidden-states output to compute span start logits and span end logits).
-
-The pre-trained models distilbert-base-uncased-squad2 and bert-large-uncased-whole-word-masking-finetuned-squad from transformers can tokenize the question context(answer) and find the tokens for the answer. This model can answer "yes/no questions" with a sentence instead of "yes/no" answers, thus we might also solve this problem.
-We built our component upon the blog-post https://programmerbackpack.com/bert-nlp-using-distilbert-to-build-a-question-answering-system/ and adapt the freely available code to our case.
+Note the two stage process of extracting relevant passages: First, we extract articles, then, from the retrieved articles, we retrieve paragraphs.
 
 
-### Experiments 
+#### Answer extraction
+For question answering, the [huggingface transformers library](https://github.com/huggingface/transformers) [4] provides pretained models that can extract answer spans to given questions from given contexts. To use these models, we make use of the library's `pipeline`-API ( https://huggingface.co/transformers/main_classes/pipelines.html ).
 
-At the moment we test each pipeline independently in order to assure a level of quality of each component.
+For our experiments, we use the `distilbert-base-uncased-distilled-squad` and `roberta-base-squad2` models, but our script, via the `pipeline`-API, allows specifying any other valid model.
 
-So far, we have evaluated the article retriever with the Okapi BM25 ranking model automatically. Because our dataset contains only one correct article, we focus on the rank the module assigns to the correct document: We calculate R-precision.
-Because our goal is for the one correct article to be ranked as high as possible we also compute Mean Reciprocal Rank (MMR).
+
+### Experiments
+
+#### Evaluation of Article Retrieval
+
+Because our dataset contains only one correct article for each question, we focus on the rank the module assigns to the correct document and whether this document is passed on the the next pipeline step: We calculate R-precision, Recall@k, Precision@k and also compute Mean Reciprocal Rank (MMR).
 
 | Model       |       Metric |   Test |
 |-------------|-------------:|-------:|
@@ -142,7 +111,43 @@ Because our goal is for the one correct article to be ranked as high as possible
 | Okapi BM25  | Precision@10 | 0.0012 |
 | TF-IDF cos. | Precision@10 | 0.0012 |
 
-These results show that we may easily improve upon our current method. As soon as we fine-tune the model, our results will improve to some extent. Note that though the TF-IDF weighting ranking method achieves far better results, it is more than 10x slower than the Opaki BM25 weighting ranking model.
+These results show that we may still improve upon our current method. Note that surprisingly the TF-IDF weighting ranking method achieves far better results.
+
+#### Evaluation of the full model
+
+Evaluating question answering is difficult, because potentially many different concrete strings represent the correct answer. Furthermore, to some questions, no unique correct answer exists.
+
+For our evaluation, we still focus on metrics that measure string overlap of the correct answer as provided by the dataset and the answer predicted by our model. To get a better impression of our model's performance, we measure:
+ * F1 score (between gold tokens and predicted tokens)
+ * Exact match (predicted answer must match gold answer exactly)
+ * BLEU score (between gold tokens and predicted tokens)
+ * Word-Error-Rate (normalised Levenshtein-Edit-Distance)
+ * Jaccard-Index of types that appear in correct and predicted answer
+
+First we report results for the default pretrained model (`distilbert-base-uncased-distilled-squad`):
+
+|                | F1   | Exact Match | BLEU  | WER  | Jaccard |
+|----------------|------|-------------|-------|------|---------|
+| TF-IDF         | 0.01 | 0.00        | 15.41 | 1.37 | 0.00    |
+| TF-IDF + Index | 0.01 | 0.00        | 15.13 | 1.40 | 0.00    |
+| BM25           | 0.01 | 0.00        | 15.21 | 1.39 | 0.00    |
+| BM25 + Index   | 0.01 | 0.00        | 15.21 | 1.39 | 0.00    |
+| No retrieval   | 0.12 | 0.08        | 18.83 | 1.23 | 0.11    |
+
+
+We can see that all retrieval methods perform equally bad. When not using any article retrieval but retrieving paragraphs directly from the set of all paragraphs in the dataset, performance improves considerably, but remains low in absolute terms.
+
+The same observation can be made for another pretrained model (`roberta-base-squad2`):
+
+|                | F1   | Exact Match | BLEU  | WER  | Jaccard |
+|----------------|------|-------------|-------|------|---------|
+| TF-IDF + Index | 0.01 | 0.00        | 16.01 | 1.27 | 0.00    |
+| No retrieval   | 0.15 | 0.09        | 19.72 | 1.18 | 0.13    |
+
+The low performance of the model with article retrieval cannot be explained fully by insufficient quality of the retrieval component, because we observe Recall@10 of up to 0.5 for the article retrieval module (TF-IDF weighting).
+
+Therefore, it rather seems to be the case that errors accumulate between the multiple submodules. This confirms the current trend to engineer question answering systems that work with as few components as possible.
+
 
 ## Data Analysis
 
@@ -243,18 +248,12 @@ Distribution of Named Entity in answer in dependence of question word (NaturalQu
 
 ## References
 
-[1] Xin Li and Dan Roth. 2002. *Learning Question Classifiers*. 19th International Conference on Computational Linguistics, COLING 2002, Howard International House and Academia Sinica, Taipei, Taiwan, August 24 - September 1.
+[1] Matthew Honnibal, Ines Montani, Sofie Van Landeghem, and Adriane Boyd. 2020. *spaCy: Industrial-strength Natural Language Processing in Python*. Zenondo.
 
-[2] Matthew Honnibal, Ines Montani, Sofie Van Landeghem, and Adriane Boyd. 2020. *spaCy: Industrial-strength Natural Language Processing in Python*. Zenondo.
+[2] Radim Rehurek and Petr Sojka. 2010. *Software Framework for Topic Modelling with Large Corpora*. In Proceedings of the LREC 2010 Workshop on New Challenges for NLP Frameworks, pages 45--50.
 
-[3] Christiane Fellbaum. 1998. *A Semantic Network of English: The Mother of All WordNets*. In Computational Humanities 32, pages 209--220.
+[3] Bird, Steven, Ewan Klein, and Edward Loper (2009), Natural Language
+Processing with Python, O'Reilly Media.
 
-[4] Radim Rehurek and Petr Sojka. 2010. *Software Framework for Topic Modelling with Large Corpora*. In Proceedings of the LREC 2010 Workshop on New Challenges for NLP Frameworks, pages 45--50.
+[4] Wolf, Thomas, et al. "Transformers: State-of-the-art natural language processing." Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations. 2020.
 
-[5] Harish Tayyar Madabushi and Mark Lee. 2016. *High Accuracy Rule-based Question Classification using Question Syntax and Semantics*. In Proceedings of COLING 2016, the 26th International Conference on Computational Linguistics: Technical Papers, pages 1220-1230 Osaka, Japan.
-
-[6] Zhiheng Huang, Marcus Thint, Zengchang Qin. 2008. *Question classification using head words and their hypernyms*. In Proceedings of the Conference on Empirical Methods in Natural Language Processing, EMNLP'08, pages 927-936, Stroudsburg, PA, USA. Association for Computational Linguistics.
-
-[7] Michael Collins. 2003. *Head-Driven Statistical Models for Natural Language Parsing*. In Computational Linguistics 29, vol. 4, pages 589-637.
-
-[8] Joao Silva, Luisa Coheur, Ana Cristina Mendes, and Andreas Wichert. 2011. *From symbolic to sub-symbolic information in question classification*. In Artificial Intellelligence Review, 35, pages 137-154.
