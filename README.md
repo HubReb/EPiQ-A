@@ -46,7 +46,7 @@ All training steps are given in the `src/train.sh` bash script. Simply run `bash
 Note that, in total, our implementation requires ~30 GB of RAM to load all trained models and the data.
 
 
-## Future Planning
+### Future Planning
 
 At the moment our article retrieval steps serves to weaken our overall approach. For instance, the Recall@10 is only about 50\% and our Precision@k performance is disturbingly low. We believe that replacing our TF-IDf approach with a neural retrieval model would significantly improve this pipeline step's results and thus help us achieve better overall performance. 
 Another possible step would be to cut down on the number of retrieved articles. Right now, the user decides how many articles are retrieved and passed on to the next pipeline step with a default value of ten. It may be feasible to take a closer look at the scoring of the articles and discard all articles with a similarity value below a threshold. However, one would first need to think of an adequate way to determine the value of this threshold as most questions have a low similarity to all possible articles and hard-coding such a threshold would result in the module simply returning no articles at all.
