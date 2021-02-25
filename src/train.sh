@@ -1,5 +1,6 @@
 #!/bin/sh
 
+cd article_retrieval
 echo "Merging natural questions training and dev set articles,,,"
 python fuse.py
 echo "Creating inverted index... This step may take several hours (depending on your hardware)"
