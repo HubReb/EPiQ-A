@@ -34,6 +34,9 @@ def load_dataset(
     dataset = []
     for question, wiki_id in zip(questions, wiki_ids):
         processed_query = query_processing(question, model, stop_words)
+        if processed_query == []:
+            print("skipping empty query")
+            continue
         dataset.append((processed_query, wiki_id))
     return dataset
 
@@ -215,6 +218,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     if args.all:
-        evaluate(DATAPATH, True)
+        evaluate(DATAPATH, False)
     else:
         evaluate(DATAPATH)
