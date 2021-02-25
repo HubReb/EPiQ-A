@@ -46,13 +46,13 @@ All training steps are given in the `src/train.sh` bash script. Simply run `bash
 Note that, in total, our implementation requires ~30 GB of RAM to load all trained models and the data.
 
 
-### Future Planning
+## Future Planning
 
 At the moment our article retrieval steps serves to weaken our overall approach. For instance, the Recall@10 is only about 50\% and our Precision@k performance is disturbingly low. We believe that replacing our TF-IDf approach with a neural retrieval model would significantly improve this pipeline step's results and thus help us achieve better overall performance. 
 Another possible step would be to cut down on the number of retrieved articles. Right now, the user decides how many articles are retrieved and passed on to the next pipeline step with a default value of ten. It may be feasible to take a closer look at the scoring of the articles and discard all articles with a similarity value below a threshold. However, one would first need to think of an adequate way to determine the value of this threshold as most questions have a low similarity to all possible articles and hard-coding such a threshold would result in the module simply returning no articles at all.
 
 
-### High-level Architecture Description:
+## High-level Architecture Description:
 Our project requires 2 main parts: Data preprocessing and the question answering pipeline. The pipeline consists of 4 different parts: 
  1. Preprocessing the query
  2. retrieval of articles that may contain the answer to the query
@@ -63,13 +63,13 @@ Retrieval of the articles requires its own submodule  due to the different, inte
 
 In the following, we describe each pipeline step in detail.
 
-#### Question Processing
+### Question Processing
 The question processing component applies fundamental prepocessing to the given natural language question (represented as string). This includes tokenisation, and optionally stop-word-removal, lowercasing, and lemmatising or stemming. Lemmatising and stemming are mutually exclusive.
 
 For tokenisation and lemmatising, we use the [spacy library](https://spacy.io/) [1]. For stop-word-removal and stemming, we use [NLTK](https://www.nltk.org/) [3].
 
 
-#### Article Retrieval
+### Article Retrieval
 
 
 We first build an inverted index from the articles in the entire dataset: We lemmatise each tokenised word in the dataset. Then we remove stop words. The remaining words are used to build the index. Each word maps to a list of documents that contain this word.
@@ -80,7 +80,7 @@ Regardless of the chosen ranking model we pass the top ten ranked articles to th
 All further detail is given in the sub-modules folder `article_retrieval`.
 
 
-#### Paragraph retrieval
+### Paragraph retrieval
 To extract relevant paragraphs from the retrieved articles, we again use a BM25 model (gensim implementation). 
 
 The model first maps retrieved articles to their paragraphs. The paragraphs are cached. Then, the BM25-model ranks these paragraphs according to the given query. We return the top ranked paragraphs. Because the pretrained answer extraction models (see below) can only handle contexts of limited length, we split each paragraph into (overlapping) context windows.
@@ -88,15 +88,15 @@ The model first maps retrieved articles to their paragraphs. The paragraphs are 
 Note the two stage process of extracting relevant passages: First, we extract articles, then, from the retrieved articles, we retrieve paragraphs.
 
 
-#### Answer extraction
+### Answer extraction
 For question answering, the [huggingface transformers library](https://github.com/huggingface/transformers) [4] provides pretained models that can extract answer spans to given questions from given contexts. To use these models, we make use of the library's `pipeline`-API ( https://huggingface.co/transformers/main_classes/pipelines.html ).
 
 For our experiments, we use the `distilbert-base-uncased-distilled-squad` and `roberta-base-squad2` models, but our script, via the `pipeline`-API, allows specifying any other valid model.
 
 
-### Experiments
+## Experiments
 
-#### Evaluation of Article Retrieval
+### Evaluation of Article Retrieval
 
 Because our dataset contains only one correct article for each question, we focus on the rank the module assigns to the correct document and whether this document is passed on the the next pipeline step: We calculate R-precision, Recall@k, Precision@k and also compute Mean Reciprocal Rank (MMR).
 
@@ -113,7 +113,7 @@ Because our dataset contains only one correct article for each question, we focu
 
 These results show that we may still improve upon our current method. Note that surprisingly the TF-IDF weighting ranking method achieves far better results.
 
-#### Evaluation of the full model
+### Evaluation of the full model
 
 Evaluating question answering is difficult, because potentially many different concrete strings represent the correct answer. Furthermore, to some questions, no unique correct answer exists.
 
