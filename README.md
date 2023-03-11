@@ -1,4 +1,4 @@
-# EPiQ-A
+# EPiQ-A  (archived as of March, 2023)
 
 ## Team members
 * Marinco Möbius (moebius@cl.uni-heidelberg.de)
